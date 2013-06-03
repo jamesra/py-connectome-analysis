@@ -1,7 +1,7 @@
 '''
 Created on May 16, 2013
 
-@author: u0490822
+@author: James Anderson
 '''
 import unittest
 import webclient.json.client as clients

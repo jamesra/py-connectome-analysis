@@ -1,7 +1,7 @@
 '''
 Created on May 22, 2013
 
-@author: u0490822
+@author: James Anderson
 '''
 
 import os

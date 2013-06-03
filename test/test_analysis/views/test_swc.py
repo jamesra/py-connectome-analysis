@@ -1,7 +1,7 @@
 '''
 Created on May 27, 2013
 
-@author: u0490822
+@author: James Anderson
 '''
 import Test.test_connectomedata.test_model as test_model
 import connectomics.viewmodel.morphology as morphology
