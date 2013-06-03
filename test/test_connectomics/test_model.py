@@ -2,12 +2,12 @@ import unittest
 from datetime import datetime
 from connectomics.graphs import structurelocations, structureconnectivity
 import pickle
-import Test.testbase
+import test.testbase
 import os
 
 endpoint = "http://connectomes.utah.edu/Services/RC1/ConnectomeData.svc"
 
-class GraphTest(Test.testbase.TestBase):
+class GraphTest(test.testbase.TestBase):
 
     def setUp(self):
         super(GraphTest, self).setUp()

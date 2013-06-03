@@ -3,7 +3,7 @@ Created on May 27, 2013
 
 @author: James Anderson
 '''
-import Test.test_connectomedata.test_model as test_model
+import test.test_connectomics.test_model as test_model
 import connectomics.viewmodel.morphology as morphology
 
 import connectomics.view.swc as swc
