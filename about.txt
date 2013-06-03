@@ -1,0 +1,18 @@
+This is a set of python libraries for mining the connectome data hosted by the Marc lab at the University of Utah Moran Eye Center.
+
+For details on where this data comes from one can refer to:
+ 
+http://prometheus.med.utah.edu/~marclab/index.html
+http://connectomes.utah.edu/
+
+Viking, the application this data was populated with, is described in this publication.  
+This contains a brief overview of how data is stored on the server these libraries communicate with.
+http://www.ncbi.nlm.nih.gov/pmc/articles/PMC3017751/
+
+Scientific results from mining this data can be seen here:
+http://prometheus.med.utah.edu/~marclab/marclab_09_science-papers.html
+http://www.ncbi.nlm.nih.gov/pubmed/23042441
+https://www.molvis.org/molvis/v17/a41/
+
+
+
