@@ -5,7 +5,7 @@ Created on May 16, 2013
 '''
 
 import networkx as nx
-import connectomics.queries as queries
+import datamodels.queries as queries
 
 def Load(structureID, endpoint=None):
 

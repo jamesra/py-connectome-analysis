@@ -5,7 +5,7 @@ Created on May 17, 2013
 '''
 
 import networkx as nx
-import connectomics.queries as queries
+import datamodels.queries as queries
 import copy
 
 def Load(structureID, hops=3, endpoint=None):

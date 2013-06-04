@@ -7,8 +7,8 @@ Created on May 21, 2013
 import numpy as np
 from scipy.spatial import kdtree, distance
 import networkx as nx
-import connectomics.graphs.structurelocations as structurelocations
-from connectomics import enum
+import datamodels.graphs.structurelocations as structurelocations
+from enum import enum
 
 iLoc = enum(X=0,
              Y=1,

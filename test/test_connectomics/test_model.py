@@ -1,6 +1,6 @@
 import unittest
 from datetime import datetime
-from connectomics.graphs import structurelocations, structureconnectivity
+from datamodels.graphs import structurelocations, structureconnectivity
 import pickle
 import test.testbase
 import os
