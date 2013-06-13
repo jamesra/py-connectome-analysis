@@ -16,6 +16,9 @@ class GraphTest(test.testbase.TestBase):
         if not os.path.exists(self.GraphCacheDir):
             os.makedirs(self.GraphCacheDir)
 
+        if not os.path.exists(self.OutputPath):
+            os.makedirs(self.OutputPath)
+
     @property
     def GraphCacheDir(self):
         return os.path.join(self.TestBaseDir, 'GraphCache')
@@ -100,8 +103,12 @@ class ConnectivityGraphTest(GraphTest):
         return 476
 
     @property
+    def Hops(self):
+        return 2
+
+    @property
     def GraphName(self):
         return "StructureConnectivity"
 
     def CreateGraph(self, StructureID):
-        return structureconnectivity.Load(StructureID, endpoint=endpoint)
+        return structureconnectivity.Load(StructureID, hops=self.Hops, endpoint=endpoint)

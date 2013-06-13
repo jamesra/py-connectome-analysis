@@ -19,17 +19,21 @@ def Load(structureID, hops=3, endpoint=None):
         print "Fetching connectivity hop #" + str(i)
         structureConnectivity.GetNextHop()
 
+    structureConnectivity.AddNodeEdges()
+
     return structureConnectivity
 
 
 class StructureStore(dict):
 
     def __getitem__(self, key):
-        if not key in self.keys():
+
+        structure = self.get(key, None)
+        if structure is None:
             structure = queries.GetStructure(key)
             self[structure.ID] = structure
 
-        return super(StructureStore, self).__getitem__(key)
+        return structure
 
 
 structures = StructureStore()
@@ -43,8 +47,8 @@ class StructureConnectivity(nx.MultiDiGraph):
         '''
         Constructor
         '''
-        
-        super(StructureConnectivity,self).__init__()
+
+        super(StructureConnectivity, self).__init__()
 
         self.nexthopstructures = []
 
@@ -69,16 +73,15 @@ class StructureConnectivity(nx.MultiDiGraph):
 
     def FetchChildStructures(self, structure):
         '''Grab the child structure in advance to minimize likely round trips'''
-        
+
         if hasattr(structure, 'childStructures'):
             return structure.childStructures
-        
+
         childstructures = queries.GetLinkedCollection(structure.ChildrenURI)
         for s in childstructures:
             structures[s.ID] = s
-        
-        structure.childStructures = childstructures
 
+        structure.childStructures = childstructures
 
     def GetNextHop(self):
 
@@ -86,6 +89,7 @@ class StructureConnectivity(nx.MultiDiGraph):
         self.nexthopstructures = []
         links = []
         for s in hopStructures:
+            s.ChildStructureLinks = queries.GetChildStructureLinks(s.ID)
             links.extend(queries.GetChildStructureLinks(s.ID))
             # sourceLinks = queries.GetLinkedCollection(s.SourceOfLinksURI)
             # links.extend( queries.GetLinkedCollection(s.SourceOfLinksURI) )
@@ -93,26 +97,61 @@ class StructureConnectivity(nx.MultiDiGraph):
             # links.extend( queries.GetLinkedCollection(s.TargetOfLinksURI) )
 
         for l in links:
-            self.AddLink(l)
+            self.AddHopNodes(l)
 
-    def AddLink(self, link):
+
+    def AddHopNodes(self, link):
+        '''Add nodes only based on the links we discovered'''
 
         sourceStructParentID = structures[link.SourceID].ParentID
         targetStructParentID = structures[link.TargetID].ParentID
 
+        if sourceStructParentID is None or targetStructParentID is None:
+            print "Invalid edge: " + str(link.SourceID) + " -> " + str(link.TargetID)
+            return
+
         sourceParent = structures[sourceStructParentID]
         targetParent = structures[targetStructParentID]
 
-        AddEdge = False  # If both nodes are already in the graph any edges have already been added
         if not self.NodeInGraph(sourceParent):
             self.AddStructure(sourceParent)
-            AddEdge = True
 
         if not self.NodeInGraph(str(targetStructParentID)):
             self.AddStructure(targetParent)
-            AddEdge = True
 
-        if AddEdge:
+
+    def AddNodeEdges(self):
+        '''Once all nodes are populated add the links between the nodes'''
+
+        for struct in self.nodes():
+            if not hasattr(struct, 'ChildStructureLinks'):
+                struct.ChildStructureLinks = queries.GetChildStructureLinks(struct.ID)
+
+            self.AddChildStructureSourceEdges(struct)
+
+    def AddChildStructureSourceEdges(self, struct):
+        '''Add edges between existing nodes in the graph where the parent structure is the source'''
+
+        for link in struct.ChildStructureLinks:
+            sourceStructParentID = structures[link.SourceID].ParentID
+            if sourceStructParentID != struct.ID:
+                # To prevent duplication we only add links where our parent structure is the source
+                continue
+
+            targetStructParentID = structures[link.TargetID].ParentID
+
+            if sourceStructParentID is None or targetStructParentID is None:
+                print "Invalid edge: " + str(link.SourceID) + " -> " + str(link.TargetID)
+                return
+
+            sourceParent = structures[sourceStructParentID]
+
+            # We do not want to add nodes to the graph at this point.  If a node occurs here it is outside the graph's requested hops.
+            # In the original circuit viz these nodes were included as clear "Ghost nodes" to indicate further connections existed
+            if not targetStructParentID in structures:
+                continue
+
+            targetParent = structures[targetStructParentID]
+
             print "Add edge: " + str(sourceParent.ID) + " -> " + str(targetParent.ID)
-            self.add_edge(sourceParent, targetParent, source=structures[link.SourceID], target=structures[link.TargetID])
-
+            self.add_edge(sourceParent, targetParent, link=link, source=structures[link.SourceID], target=structures[link.TargetID])
