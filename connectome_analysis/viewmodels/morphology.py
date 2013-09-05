@@ -7,8 +7,8 @@ Created on May 21, 2013
 import numpy as np
 from scipy.spatial import kdtree, distance
 import networkx as nx
-import datamodels.graphs.structurelocations as structurelocations
-from enum import enum
+import connectome_analysis.datamodels.graphs.structurelocations as structurelocations
+from connectome_analysis.enum import enum
 
 iLoc = enum(X=0,
              Y=1,
@@ -16,10 +16,30 @@ iLoc = enum(X=0,
              Radius=3,
              ID=4)
 
-def Load(structureID, endpoint=None):
-    structureLocationsGraph = structurelocations.Load(structureID, endpoint)
+def Load(structureID):
+    structureLocationsGraph = structurelocations.Load(structureID)
     morphology = Morphology(structureLocationsGraph)
     return morphology
+
+
+def correct_scale(points, XYZScalars=None, RadiusScalar=None):
+    '''Takes an array of [X,Y,Z,Radius] and scales it'''
+
+    if XYZScalars is None:
+        XYZScalars = [2.18, 2.18, -90]
+
+    if RadiusScalar is None:
+        RadiusScalar = (XYZScalars[0] + XYZScalars[1]) / 2.0
+
+    points[:, 0] *= XYZScalars[0]
+    points[:, 1] *= XYZScalars[1]
+    points[:, 2] *= XYZScalars[2]
+
+    if points.shape[1] > 3:
+        points[:, 3] *= RadiusScalar
+
+    return points
+
 
 class Morphology(object):
     '''
@@ -47,6 +67,13 @@ class Morphology(object):
     def graph(self):
         return self._graph
 
+
+    @property
+    def Data(self):
+        '''Numpy array of [X,Y,Z,Radius,ID]'''
+        return self.__create_numpy_matrix(self._graph)
+
+
     def __init__(self, graph, scalars=None):
         '''
         Constructor, scalars is a tuple with 3 scalars for the X, Y, Z coordinates
@@ -61,12 +88,12 @@ class Morphology(object):
         self.locmatrix = self.__create_numpy_matrix(graph)
 
     def __correct_scale(self):
-        radiusScalar = self.RadiusScalar
+
         for n in self._graph.nodes_iter():
             n.VolumeX *= self.XScalar
             n.VolumeY *= self.YScalar
             n.Z *= self.ZScalar
-            n.Radius *= radiusScalar
+            n.Radius *= self.RadiusScalar
 
         # The locmatrix should be erased if we scaled the graph
         self.locmatrix = None
@@ -92,6 +119,7 @@ class Morphology(object):
             locmatrix[i, iLoc.ID] = node.ID
 
         return locmatrix
+
 
     def LargestRadiusNode(self):
         '''Find the node with the largest radius'''

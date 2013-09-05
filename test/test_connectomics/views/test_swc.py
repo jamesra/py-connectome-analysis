@@ -4,9 +4,9 @@ Created on May 27, 2013
 @author: James Anderson
 '''
 import test.test_connectomics.test_model as test_model
-import viewmodels.morphology as morphology
+import connectome_analysis.viewmodels.morphology as morphology
 
-import views.swc as swc
+import connectome_analysis.views.swc as swc
 import os
 
 
@@ -32,6 +32,6 @@ class TestSWCView(test_model.MorphologyGraphTest):
 
         swcGraph = swc.MorphologyToSWC(morphologyGraph)
         self.assertIsNotNone(node, "No swc data returned")
-        swcGraph.Save(os.path.join(self.OutputPath, '%d.swc' % self.StructureID))
+        swcGraph.Save(os.path.join(self.TestOutputPath, '%d.swc' % self.StructureID))
 
-        self.assertTrue(os.path.exists(os.path.join(self.OutputPath, '%d.swc' % self.StructureID)))
+        self.assertTrue(os.path.exists(os.path.join(self.TestOutputPath, '%d.swc' % self.StructureID)))

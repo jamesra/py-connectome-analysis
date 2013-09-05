@@ -30,15 +30,16 @@ def ConvertValue(value, encoding=None):
     if not dval is None:
         return dval
 
-    try:
-        ival = int(sval)
-        return ival
-    except:
-        pass
-
+    # An int can be converted to a float, so if the conversion succeeds check if it is an int
     try:
         fval = float(sval)
+
+        if not '.' in sval:
+            ival = int(fval)
+            return ival
+
         return fval
+
     except:
         pass
 
@@ -49,7 +50,7 @@ class JSONBasedObject(object):
     '''
     Creates easier to use objects based on the JSON returned from a WCF Data Services query response
     '''
-    
+
     def __str__(self):
         if hasattr(self, 'ID'):
             return str(self.ID)

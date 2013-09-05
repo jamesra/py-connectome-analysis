@@ -5,11 +5,12 @@ Created on May 16, 2013
 '''
 
 import networkx as nx
-import datamodels.queries as queries
+import connectome_analysis.datamodels.queries as queries
+import connectome_analysis.datamodels
 
-def Load(structureID, endpoint=None):
+def Load(structureID):
 
-    structure = queries.GetStructure(structureID, endpoint=endpoint)
+    structure = connectome_analysis.datamodels.StructureCache[structureID]
     locations = queries.GetLinkedCollection(structure.LocationsURI)
 
     connGraph = StructureLocations(structure, locations)

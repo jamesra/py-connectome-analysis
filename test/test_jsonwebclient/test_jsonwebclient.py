@@ -4,7 +4,7 @@ Created on May 16, 2013
 @author: James Anderson
 '''
 import unittest
-import webclient.json.client as clients
+import connectome_analysis.webclient.json.client as clients
 from datetime import datetime
 
 

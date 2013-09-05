@@ -7,7 +7,7 @@ Created on May 22, 2013
 import networkx as nx
 import logging
 import os
-from enum import enum
+from connectome_analysis.enum import enum
 
 SWCType = enum(UNDEFINED=0,
                 SOMA=1,

@@ -1,6 +1,6 @@
 import unittest
 from datetime import datetime
-from datamodels.graphs import structurelocations, structureconnectivity
+from connectome_analysis.datamodels.graphs import structurelocations, structureconnectivity, morphologyconnectivity
 import pickle
 import test.testbase
 import os
@@ -12,16 +12,16 @@ class GraphTest(test.testbase.TestBase):
     def setUp(self):
         super(GraphTest, self).setUp()
         self._graph = None
-        
-        if not os.path.exists(self.GraphCacheDir):
-            os.makedirs(self.GraphCacheDir)
 
-        if not os.path.exists(self.OutputPath):
-            os.makedirs(self.OutputPath)
+        if not os.path.exists(self.TestCachePath):
+            os.makedirs(self.TestCachePath)
+
+        if not os.path.exists(self.TestOutputPath):
+            os.makedirs(self.TestOutputPath)
 
     @property
     def GraphCacheDir(self):
-        return os.path.join(self.TestBaseDir, 'GraphCache')
+        return os.path.join(self.TestCachePath, 'GraphCache')
 
     @property
     def StructureID(self):
@@ -49,11 +49,6 @@ class GraphTest(test.testbase.TestBase):
 
         return graph
 
-    def SavePickledGraphToDisk(self, graph, path):
-        with open(path, 'w') as filehandle:
-            print("Saving: " + path)
-            pickle.dump(graph, filehandle)
-
     def ReadOrCreategraph(self):
         '''Reads graph from disk if it exists or creates it from server'''
         if self._graph is None:
@@ -64,7 +59,7 @@ class GraphTest(test.testbase.TestBase):
                 self._graph = self.CreateGraph(self.StructureID)
                 print("Done reading graph from server")
 
-                self.SavePickledGraphToDisk(self._graph, self.graphPath)
+                self.SaveVariable(self._graph, self.graphPath)
 
         self.assertIsNotNone(self._graph, "Could not read or create graph")
         return self._graph
@@ -92,7 +87,7 @@ class MorphologyGraphTest(GraphTest):
         return 180
 
     def CreateGraph(self, StructureID):
-        return structurelocations.Load(StructureID, endpoint=endpoint)
+        return structurelocations.Load(StructureID)
 
 
 class ConnectivityGraphTest(GraphTest):
@@ -111,4 +106,4 @@ class ConnectivityGraphTest(GraphTest):
         return "StructureConnectivity"
 
     def CreateGraph(self, StructureID):
-        return structureconnectivity.Load(StructureID, hops=self.Hops, endpoint=endpoint)
+        return morphologyconnectivity.Load(StructureID, hops=self.Hops, endpoint=endpoint)

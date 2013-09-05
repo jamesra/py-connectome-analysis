@@ -4,6 +4,8 @@ Created on Jun 4, 2013
 @author: James Anderson
 '''
 
+
+
 class NeuralNetwork(object):
     '''
     classdocs
@@ -15,6 +17,7 @@ class NeuralNetwork(object):
 
     def __init__(self, graph, scalars=None):
         '''
-        Constructor, scalars is a tuple with 3 scalars for the X, Y, Z coordinates
+        Constructor
         '''
         self._graph = graph
+
