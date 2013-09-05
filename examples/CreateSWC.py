@@ -1,7 +1,9 @@
 '''
 Created on Sep 5, 2013
 
-@author: u0490822
+@author: James Anderson
+
+Example code for creating swc files from the Marc lab connectome database
 '''
 
 import sys
