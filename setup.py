@@ -7,15 +7,16 @@ Created on Aug 30, 2013
 
 from distutils.core import setup
 
-print ""
-print "Connectome_analysis requires these third-party packages:"
-print "  numpy"
-print "  scipy"
-print "  networkx"
-print "  requests"
-print "  matplotlib"
-print ""
-print ""
+try:
+    print ""
+    with open("readme_setup.txt", 'r') as f:
+        lines = f.readlines()
+        for l in lines:
+            print l.rstrip()
+    print ""
+    print ""
+except:
+    print "Unable to print readme_setup.txt instructions"
 
 
 setup(name='connectome_analysis',
