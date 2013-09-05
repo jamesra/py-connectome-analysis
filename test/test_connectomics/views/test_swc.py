@@ -16,7 +16,7 @@ class TestSWCView(test_model.MorphologyGraphTest):
     '''
     @property
     def StructureID(self):
-        return 6117
+        return 476
 
     def test_CreateSWC(self):
 

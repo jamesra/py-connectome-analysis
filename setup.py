@@ -8,18 +8,19 @@ Created on Aug 30, 2013
 from distutils.core import setup
 
 print ""
-print "Connectome_analysis uses the following third-party packages which must be installed"
+print "Connectome_analysis requires these third-party packages:"
 print "  numpy"
 print "  scipy"
 print "  networkx"
 print "  requests"
 print "  matplotlib"
 print ""
+print ""
 
 
 setup(name='connectome_analysis',
       version='1.0',
-      description="Access and visualization tools for connectomes.  Connectome data access for data hosted via ODATA.",
+      description="Access and visualization tools for connectome data",
       author="James Anderson",
       author_email="James.R.Anderson@utah.edu",
       url="https://github.com/jamesra/py-connectome-analysis",

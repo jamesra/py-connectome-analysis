@@ -169,6 +169,7 @@ class Morphology(object):
 
         # print "Starting number of nodes: " + str(len(self.graph.nodes()))
 
+        # Check the termial and fork nodes first because we do not want them removed
         for n in self.graph.nodes():
             if not n in self.graph.nodes():
                 continue
@@ -178,6 +179,8 @@ class Morphology(object):
 
             self.RemoveOverlappingNeighbors(n)
 
+        # Once we have removed nodes which overlap the terminals and forks we can remove
+        # overlapping nodes along a process
         for n in self.graph.nodes():
             if not n in self.graph.nodes():
                 continue
@@ -195,10 +198,13 @@ class Morphology(object):
 
     def RemoveOverlappingNeighbors(self, node):
 
-        neighborlist = nx.all_neighbors(self.graph, node)
+        neighborlist = list(nx.all_neighbors(self.graph, node))
         neighborsRemoved = False
 
         for neighbor in neighborlist:
+            if not neighbor in self.graph.nodes():
+                continue
+
             # Do not remove endpoints or forks
             if nx.degree(self.graph, neighbor) != 2:
                 continue
