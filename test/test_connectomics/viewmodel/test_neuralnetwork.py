@@ -11,22 +11,22 @@ import networkx as nx
 
 import connectome_analysis.views.svg as svg
 import os
-#
-# class NeuralNetworkTest(test_model.ConnectivityGraphTest):
-#
-#    @property
-#    def Hops(self):
-#        return 1
-#
-#    @property
-#    def StructureID(self):
-#        return 180
-#
-#    def test_writeSVG(self):
-#
-#        neuralNetwork = nn.NeuralNetwork(self.graph)
-#        svg.FromNeuralNetwork.Save(neuralNetwork.graph, os.path.join(self.OutputPath, '%d.svg' % self.StructureID))
-#
-# if __name__ == "__main__":
-#    # import sys;sys.argv = ['', 'Test.testName']
-#    unittest.main()
+
+class NeuralNetworkTest(test_model.ConnectivityGraphTest):
+
+   @property
+   def Hops(self):
+       return 1
+
+   @property
+   def StructureID(self):
+       return 180
+
+   def test_writeSVG(self):
+
+       neuralNetwork = nn.NeuralNetwork(self.graph)
+       svg.FromNeuralNetwork.Save(neuralNetwork.graph, os.path.join(self.TestOutputPath, '%d.svg' % self.StructureID))
+
+if __name__ == "__main__":
+   # import sys;sys.argv = ['', 'Test.testName']
+   unittest.main()
