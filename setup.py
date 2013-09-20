@@ -5,9 +5,15 @@ Created on Aug 30, 2013
 '''
 
 
-from distutils.core import setup
+from ez_setup import use_setuptools
+from setuptools import setup, find_packages
 
+# This if test prevents an infinite recursion running tests from "python setup.py test"
 if __name__ == '__main__':
+
+    use_setuptools()
+
+    packages = find_packages()
 
     try:
         print ""
@@ -20,6 +26,15 @@ if __name__ == '__main__':
     except:
         print "Unable to print readme_setup.txt instructions"
 
+    install_requires = ["networkx",
+                        "numpy",
+                        "scipy",
+                        "matplotlib",
+                        "requests",
+                        "pyxb>=1.2.2"]
+
+
+    dependency_links = ["git+http://github.com/networkx/networkx#egg=networkx" ]
 
     setup(name='connectome_analysis',
           version='1.0',
@@ -27,11 +42,7 @@ if __name__ == '__main__':
           author="James Anderson",
           author_email="James.R.Anderson@utah.edu",
           url="https://github.com/jamesra/py-connectome-analysis",
-          packages=["connectome_analysis",
-                    "connectome_analysis.datamodels",
-                    "connectome_analysis.datamodels.cache",
-                    "connectome_analysis.datamodels.graphs",
-                    "connectome_analysis.viewmodels",
-                    "connectome_analysis.views",
-                    "connectome_analysis.webclient",
-                    "connectome_analysis.webclient.json"])
+          test_suite="test",
+          install_requires=install_requires,
+          dependency_links=dependency_links,
+          packages=packages)
