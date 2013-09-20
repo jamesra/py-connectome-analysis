@@ -26,7 +26,8 @@ def correct_scale(points, XYZScalars=None, RadiusScalar=None):
     '''Takes an array of [X,Y,Z,Radius] and scales it'''
 
     if XYZScalars is None:
-        XYZScalars = [2.18, 2.18, -90]
+        XYZScalars = np.double([2.18, 2.18, -90])  # nm/pixel of our TEM @ 5000x
+        XYZScalars *= .001  # Convert to microns
 
     if RadiusScalar is None:
         RadiusScalar = (XYZScalars[0] + XYZScalars[1]) / 2.0
@@ -79,7 +80,8 @@ class Morphology(object):
         Constructor, scalars is a tuple with 3 scalars for the X, Y, Z coordinates
         '''
         if scalars is None:
-            scalars = (2.18, 2.18, -90)  # Use the values for the first rabbit connectome if not specified
+            scalars = np.double([2.18, 2.18, -90])  # Use the values for the first rabbit connectome if not specified
+            scalars *= .001  # Convert to microns
 
         self._scalars = scalars
 
