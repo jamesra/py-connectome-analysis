@@ -15,7 +15,9 @@ class Test(unittest.TestCase):
         sbyLabel = distinctlabels.LabelsForStructures()
 
         listLabels = list()
-        for k in sbyLabel.keys():
+        keys = sbyLabel.keys()
+        keys.sort()
+        for k in keys:
             self.assertFalse(k in listLabels, "Duplicate label in Structures by label: " + str(k))
             listLabels.append(k)
 

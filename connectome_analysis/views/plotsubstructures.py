@@ -18,7 +18,7 @@ import numpy as np
 
 
 
-def PlotStructureByLabel(LabelToStructs, substructureByParent, typeID, DepthTranslator=None):
+def PlotStructureByLabel(LabelToStructs, substructureByParent, typeID, DepthTranslator=None, path=None):
     '''Puts all structures with a given type on a 2D plot'''
 
 
@@ -97,4 +97,8 @@ def PlotStructureByLabel(LabelToStructs, substructureByParent, typeID, DepthTran
     plt.xlabel("Z Depth 0 to 1.0")
     plt.ylabel("Cell label")
     plt.title("Gap junction depth by cell label in RC1")
-    plt.show()
+
+    if path is None:
+        plt.show()
+    else:
+        plt.savefig(path)

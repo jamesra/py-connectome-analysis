@@ -19,6 +19,7 @@ from matplotlib import cm
 from mpl_toolkits.mplot3d import Axes3D
 
 import test.testbase
+import os
 
 
 import connectome_analysis.viewmodels.positiontranslator as position
@@ -122,9 +123,11 @@ class TestIPLDepth(test.testbase.TestBase):
         self.SaveVariable(self.GCLBoundaryPoints, 'GCLBoundaryPoints.pickle')
         self.PlotBoundary(ax, self.GCLBoundaryPoints)
 
+        TargetPath = os.path.join(self.TestOutputPath, "testIPL.svg")
 
+        plt.savefig(TargetPath)
 
-        plt.show()
+        # plt.show()
 
         pass
 

@@ -12,9 +12,10 @@ def SplitLabelTags(tags):
     if len(tags) == 0:
         return []
 
-    tags.split(',')
+    taglist = tags.split(',')
+    taglist = map(str.strip, taglist)
+    return taglist
 
-    return tags
 
 def LabelParts(label):
     '''Returns a tuble with the first part containing the label with any []'s removed
@@ -31,15 +32,23 @@ def LabelParts(label):
     tagList = []
     if iBracket >= 0:
         baselabel = label[:iBracket]
+
         tagStr = label[iBracket + 1:]
+
+        iendBracket = tagStr.rfind(']')
+        if iendBracket >= 0:
+            tagStr = tagStr[:iendBracket]
+
         tagList = SplitLabelTags(tagStr.strip())
 
     baselabel = baselabel.strip()
 
     return (baselabel, tagList)
 
-def UniqueLabels(LabelList):
-    '''Return a list of unique label names, ignoring case.  Comments and tags with [] are ignored'''
+
+# def UniqueLabels(LabelList):
+#    '''Return a list of unique label names, ignoring case.  Comments and tags with [] are ignored'''
+ #   pass
 
 
 if __name__ == '__main__':

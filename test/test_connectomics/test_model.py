@@ -7,7 +7,9 @@ import os
 
 endpoint = "http://connectomes.utah.edu/Services/RC1/ConnectomeData.svc"
 
+
 class GraphTest(test.testbase.TestBase):
+
 
     def setUp(self):
         super(GraphTest, self).setUp()

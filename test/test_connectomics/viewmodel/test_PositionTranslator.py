@@ -14,6 +14,8 @@ from matplotlib import cm
 from mpl_toolkits.mplot3d import Axes3D
 import numpy as np
 
+import os
+
 INL_IPL_MarkerTypeID = 224
 IPL_GCL_MarkerTypeID = 235
 
@@ -78,7 +80,11 @@ class TestPositionTranslator(test.testbase.TestBase):
         self.PlotBoundary(ax, bottom_points)
         self.PlotBoundary(ax, top_points)
 
-        plt.show()
+        TargetPath = os.path.join(self.TestOutputPath, "testPositionTranslator.svg")
+
+        plt.savefig(TargetPath)
+
+        # plt.show()
 
 
 
@@ -105,7 +111,11 @@ class TestPositionTranslator(test.testbase.TestBase):
 
         self.PlotBoundary(ax, FlattenedIPLPoints)
 
-        plt.show()
+        TargetPath = os.path.join(self.TestOutputPath, "testFlattenedGCL.svg")
+
+        plt.savefig(TargetPath)
+
+        # plt.show()
 
         pass
 

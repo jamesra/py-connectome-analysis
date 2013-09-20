@@ -24,8 +24,11 @@ class NeuralNetworkTest(test_model.ConnectivityGraphTest):
 
    def test_writeSVG(self):
 
+       self.logger.info("Fetching neural connectivity network")
        neuralNetwork = nn.NeuralNetwork(self.graph)
-       svg.FromNeuralNetwork.Save(neuralNetwork.graph, os.path.join(self.TestOutputPath, '%d.svg' % self.StructureID))
+ #      self.logger.info("Graphing neural connectivity network")
+ #      svg.FromNeuralNetwork.Save(neuralNetwork.graph, os.path.join(self.TestOutputPath, '%d.svg' % self.StructureID))
+       self.logger.info("Done")
 
 if __name__ == "__main__":
    # import sys;sys.argv = ['', 'Test.testName']

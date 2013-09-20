@@ -37,7 +37,8 @@ class LabelTest(unittest.TestCase):
             (labelbase, labeltags) = mappings.LabelParts(label)
             self.assertEqual(labelbase, LabelTest.OutputLabelList[iLabel], 'Unexpected output for label name from mappings.LabelParts')
 
-            self.assertEqual(len(labeltags), len(LabelTest.OutputLabelTagsList[iLabel]), 'Incorrect number of tags returned')
+            self.assertEqual(len(labeltags), len(LabelTest.OutputLabelTagsList[iLabel]), 'Incorrect number of tags returned\n' + LabelTest.InputLabelList[iLabel] +
+                              "\treturned " + str(labeltags) + "\t not " + str(LabelTest.OutputLabelTagsList[iLabel]))
 
             for (iTag, tag) in enumerate(labeltags):
                 self.assertEqual(tag, LabelTest.OutputLabelTagsList[iLabel][iTag])

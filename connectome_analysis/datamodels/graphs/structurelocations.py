@@ -20,12 +20,18 @@ def Load(structureID):
 class StructureLocations(nx.Graph):
     '''An unfiltered graph containing all locations for a structure'''
 
+    @property
+    def ID(self):
+        return self._ID
+
     def __init__(self, structure, locations, **kwargs):
         '''
         build a graph of the morphology for a structure
         '''
         super(StructureLocations, self).__init__(structure=structure)
         self.__BuildGraph(structure, locations)
+
+        self._ID = structure.ID
 
     def __BuildGraph(self, structure, locations):
         '''

@@ -4,6 +4,7 @@ Created on Jul 17, 2013
 @author: u0490822
 '''
 import unittest
+import os
 from connectome_analysis.views import plotsubstructures
 import connectome_analysis.viewmodels.positiontranslator as position
 import connectome_analysis.datamodels.queries as queries
@@ -83,8 +84,9 @@ class TestSubstructurePlot(test.testbase.TestBase):
 
         substructureByParent = GroupByParent(self.substructures)
 
-        plotsubstructures.PlotStructureByLabel(LabelsForStructures, substructureByParent, 28, positionTranslator)
-        pass
+        TargetPath = os.path.join(self.TestOutputPath, "TestSubstructurePlot.svg")
+        plotsubstructures.PlotStructureByLabel(LabelsForStructures, substructureByParent, 28, positionTranslator, path=TargetPath)
+
 
 
 

@@ -7,12 +7,19 @@ Created on May 22, 2013
 import os
 import unittest
 import pickle
+import logging
 
+
+logging.basicConfig(level=logging.INFO)
 
 class TestBase(unittest.TestCase):
     '''
     classdocs
     '''
+
+    def __init__(self, *args, **kwargs):
+        self.logger = logging.getLogger(self.classname)
+        super(TestBase, self).__init__(*args, **kwargs)
 
     @property
     def classname(self):
@@ -45,6 +52,8 @@ class TestBase(unittest.TestCase):
         Constructor
         '''
         super(TestBase, self).setUp()
+
+        self.assertTrue('TESTOUTPUTPATH' in os.environ, "User's test environment must set TESTOUTPUTPATH environment variable to desired path for test output")
 
         if not os.path.exists(self.TestOutputPath):
             os.makedirs(self.TestOutputPath)
