@@ -6,6 +6,30 @@ Created on Jun 4, 2013
 
 import matplotlib.pyplot as plt
 import networkx as nx
+import connectome_analysis.viewmodels.distinctlabels as distinctlabels
+
+def ColorForNode(node):
+    label = distinctlabels.UniqueLabel(node.Label)
+
+    if label is None:
+        return "gray"
+
+    if 'YAC' in label:
+        return "red"
+    elif 'GAC' in label:
+        return "green"
+    elif 'CBb' in label:
+        return "cyan"
+    elif 'CBa' in label:
+        return "darkblue"
+    elif 'AC' in label:
+        return "purple"
+    elif 'BC' in label:
+        return "blue"
+    elif 'GC' in label:
+        return "gold"
+
+    return "gray"
 
 class FromNeuralNetwork(object):
 
@@ -34,7 +58,10 @@ class FromNeuralNetwork(object):
         # layout = nx.spring_layout(graph, scale=2.0)
         layout = nx.graphviz_layout(graph, 'neato')
         labels = FromNeuralNetwork.NodeLabels(graph.nodes())
-        nx.draw_networkx(graph, labels=labels, pos=layout, font_size=3)
+
+        colors = map(ColorForNode, graph.nodes())
+
+        nx.draw_networkx(graph, labels=labels, node_color=colors, font_size=3, pos=layout)  # pos=layout, font_size=3)
         plt.savefig(path)
 
 if __name__ == '__main__':

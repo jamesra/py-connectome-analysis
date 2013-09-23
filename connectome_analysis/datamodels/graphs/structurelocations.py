@@ -22,16 +22,20 @@ class StructureLocations(nx.Graph):
 
     @property
     def ID(self):
-        return self._ID
+        return self.structure.ID
+
+    @property
+    def structure(self):
+        return self._structure
 
     def __init__(self, structure, locations, **kwargs):
         '''
         build a graph of the morphology for a structure
         '''
         super(StructureLocations, self).__init__(structure=structure)
+        self._structure = structure
         self.__BuildGraph(structure, locations)
 
-        self._ID = structure.ID
 
     def __BuildGraph(self, structure, locations):
         '''

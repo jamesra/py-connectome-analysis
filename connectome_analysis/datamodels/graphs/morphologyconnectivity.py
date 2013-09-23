@@ -25,8 +25,7 @@ def Load(structureID, hops=3, endpoint=None):
 
 
 class MorphologyConnectivity(nx.MultiDiGraph):
-    '''
-    classdocs
+    ''' 
     '''
 
     def __init__(self):
@@ -52,7 +51,12 @@ class MorphologyConnectivity(nx.MultiDiGraph):
         self.structures[structure.ID] = structure
 
         self.add_node(structure)
-        print "Add Node: " + str(structure.ID)
+
+        helpstr = "Add Node: " + str(structure.ID)
+        if structure.Label is not None:
+            helpstr += " " + structure.Label
+
+        print helpstr
 
         # self.nexthopstructures.extend( queries.GetLinkedCollection(structure.ChildrenURI) )
         self.FetchChildStructures(structure)
@@ -116,8 +120,17 @@ class MorphologyConnectivity(nx.MultiDiGraph):
 
             self.AddChildStructureSourceEdges(struct)
 
+    def _CreateEdgeKey(self, sourceID, targetID):
+
+        if sourceID < targetID:
+            return "%d-%d" % (sourceID, targetID)
+        else:
+            return "%d-%d" % (targetID, sourceID)
+
     def AddChildStructureSourceEdges(self, struct):
         '''Add edges between existing nodes in the graph where the parent structure is the source'''
+
+        numNodesAtStart = len(self.nodes())
 
         for link in struct.ChildStructureLinks:
             source = queries.GetStructure(link.SourceID)
@@ -128,6 +141,8 @@ class MorphologyConnectivity(nx.MultiDiGraph):
 
             target = queries.GetStructure(link.TargetID)
             targetStructParentID = target.ParentID
+
+            edgekey = self._CreateEdgeKey(source.ID, target.ID)
 
             if sourceStructParentID is None or targetStructParentID is None:
                 print "Invalid edge: " + str(link.SourceID) + " -> " + str(link.TargetID)
@@ -142,14 +157,22 @@ class MorphologyConnectivity(nx.MultiDiGraph):
 
             targetParent = queries.GetStructure(targetStructParentID)
 
-            print "Add edge: " + str(sourceParent.ID) + " -> " + str(targetParent.ID)
+            # print "Add edge: " + str(sourceParent.ID) + " -> " + str(targetParent.ID)
 
             # Create parent-child structure edge
-            if not self.has_edge(sourceParent, source):
-                self.add_edge(sourceParent, source, IsParentChildEdge=True, link=None)
+#            if not self.has_edge(sourceParent, source):
+#                self.add_edge(sourceParent, source, IsParentChildEdge=True, link=None)
+#
+#            if not self.has_edge(targetParent, target):
+#                self.add_edge(targetParent, target, IsParentChildEdge=True, link=None)
 
-            if not self.has_edge(targetParent, target):
-                self.add_edge(targetParent, target, IsParentChildEdge=True, link=None)
+            sourceStruct = queries.GetStructure(link.SourceID)
+            sourceType = queries.GetStructureType(sourceStruct.TypeID)
+
+            print "Add edge: " + str(sourceParent.ID) + " -> " + str(targetParent.ID) + " [" + sourceType.Name + "]"
 
             # Create edge between child self.structures
-            self.add_edge(source, target, IsParentChildEdge=False, link=link, source=queries.GetStructure(link.SourceID), target=queries.GetStructure(link.TargetID))
+            self.add_edge(sourceParent, targetParent, key=edgekey, IsParentChildEdge=False, link=link, source=queries.GetStructure(link.SourceID), target=queries.GetStructure(link.TargetID), type=sourceType)
+
+            # We should not be adding nodes by creating edges.  This means a node was not added which should have been
+            assert(numNodesAtStart == len(self.nodes()))

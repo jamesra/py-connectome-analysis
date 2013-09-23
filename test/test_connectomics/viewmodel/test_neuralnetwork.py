@@ -26,8 +26,8 @@ class NeuralNetworkTest(test_model.ConnectivityGraphTest):
 
        self.logger.info("Fetching neural connectivity network")
        neuralNetwork = nn.NeuralNetwork(self.graph)
- #      self.logger.info("Graphing neural connectivity network")
- #      svg.FromNeuralNetwork.Save(neuralNetwork.graph, os.path.join(self.TestOutputPath, '%d.svg' % self.StructureID))
+       self.logger.info("Graphing neural connectivity network")
+       svg.FromNeuralNetwork.Save(neuralNetwork.graph, os.path.join(self.TestOutputPath, '%d.svg' % self.StructureID))
        self.logger.info("Done")
 
 if __name__ == "__main__":

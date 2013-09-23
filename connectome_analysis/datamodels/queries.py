@@ -28,12 +28,16 @@ def GetStructure(ID, **kwargs):
     return connectome_analysis.datamodels.StructureCache[ID]
 
 
+def GetStructureType(ID, **kwargs):
+    return connectome_analysis.datamodels.StructureTypeCache[ID]
+
+
 def _GetStructure(ID, **kwargs):
     return __CreateClient(**kwargs).Request(structureQueryTemplate % ID)[0]
 
 
 def _GetStructureType(ID, **kwargs):
-    return connectome_analysis.datamodels.StructureTypeCache[ID]
+    return __CreateClient(**kwargs).Request(structureTypeQueryTemplate % ID)[0]
 
 
 def GetStructuresOfType(TypeID, **kwargs):

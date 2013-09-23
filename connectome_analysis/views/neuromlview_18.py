@@ -21,9 +21,9 @@ from connectome_analysis.enum import enum
 
 # import neuroml.morphology as ml
 
-import neuroml.morph as mml
-import neuroml.metaml as metaml
-import neuroml.nml as nml
+import neuroml_18.morph as mml
+import neuroml_18.metaml as metaml
+import neuroml_18.nml as nml
 
 nextid = -1
 
@@ -174,9 +174,7 @@ def CreateDocument(cells):
 #
 #    return seg
 
-
-def MorphologyToNeuroML(MorphGraph):
-    '''Converts a graph of locations and location links to the swc format'''
+def MorphologyToCell(MorphGraph):
 
     queue = []
 
@@ -195,9 +193,13 @@ def MorphologyToNeuroML(MorphGraph):
     print len(segmentlist)
 
     cellElem = CreateCell(1, segmentlist)
+    return cellElem
 
+def MorphologyToNeuroML(MorphGraph):
+    '''Converts a graph of locations and location links to the swc format'''
+
+    cellElem = MorphologyToCell(MorphGraph)
     xml = CreateDocument([cellElem])
-
 
     return xml
 

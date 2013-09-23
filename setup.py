@@ -26,15 +26,13 @@ if __name__ == '__main__':
     except:
         print "Unable to print readme_setup.txt instructions"
 
-    install_requires = ["networkx",
+    install_requires = ["networkx>=1.8",
                         "numpy",
                         "scipy",
                         "matplotlib",
                         "requests",
-                        "pyxb>=1.2.2"]
-
-
-    dependency_links = ["git+http://github.com/networkx/networkx#egg=networkx" ]
+                        "pyxb>=1.2.2",
+                        "PyGraphviz>=1.2"]
 
     setup(name='connectome_analysis',
           version='1.0',
