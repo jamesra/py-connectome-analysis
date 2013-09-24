@@ -163,7 +163,7 @@ def CreateDocument(cells):
     for c in cells:
         root.cell.append(c)
 
-    pyxb.utils.domutils.BindingDOMSupport.DeclareNamespace(nml.Namespace, "nml")
+#    pyxb.utils.domutils.BindingDOMSupport.DeclareNamespace(nml.Namespace, "nml")
 #    pyxb.utils.domutils.BindingDOMSupport.DeclareNamespace(mml.Namespace, "mml")
 #    pyxb.utils.domutils.BindingDOMSupport.DeclareNamespace(metaml.Namespace, "meta")
 

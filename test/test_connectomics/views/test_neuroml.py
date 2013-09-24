@@ -6,6 +6,8 @@ Created on May 27, 2013
 
 import test.test_connectomics.test_model as test_model
 
+import connectome_analysis.datamodels.graphs.morphologyconnectivity as morphconn
+import connectome_analysis.datamodels.graphs.structurelocations as structlocgraph
 import connectome_analysis.viewmodels.morphology as morphology
 import connectome_analysis.views.neuromlview_18 as neuromlview_18
 import connectome_analysis.views.neuromlview_20b1 as neuromlview_20b1
@@ -23,10 +25,13 @@ class TestNeuroMLView(test_model.MorphologyGraphTest):
     def StructureID(self):
         return 476
 
-    def CreateCleanedMorphGraph(self):
+    def CreateCleanedMorphGraph(self, StructureID):
+
+        print "Downloading structure locations for %d" % StructureID
+        structlocations = self.ReadOrCreateVariable("structlocations-%d" % StructureID, structlocgraph.Load, structureID=StructureID)
 
         print "Creating morphology graph"
-        morphologyGraph = morphology.Morphology(self.graph)
+        morphologyGraph = morphology.Morphology(structlocations)
         self.assertIsNotNone(morphologyGraph)
 
         print("Remove morpholgy subgraphs")
@@ -38,7 +43,7 @@ class TestNeuroMLView(test_model.MorphologyGraphTest):
 
     def test_CreateNeuroML20(self):
 
-        morphologyGraph = self.ReadOrCreateVariable("morphologyGraph", self.CreateCleanedMorphGraph)
+        morphologyGraph = self.ReadOrCreateVariable("morphology-%d" % self.StructureID, self.CreateCleanedMorphGraph, StructureID=self.StructureID)
 
 
         # print("Find largest radius node for use as soma")
@@ -58,7 +63,7 @@ class TestNeuroMLView(test_model.MorphologyGraphTest):
 
     def test_CreateNeuroML18(self):
 
-        morphologyGraph = self.ReadOrCreateVariable("morphologyGraph", self.CreateCleanedMorphGraph)
+        morphologyGraph = self.ReadOrCreateVariable("morphology-%d" % self.StructureID, self.CreateCleanedMorphGraph, StructureID=self.StructureID)
 
 
         # print("Find largest radius node for use as soma")
@@ -78,21 +83,28 @@ class TestNeuroMLView(test_model.MorphologyGraphTest):
 
     def test_CreateNeuroML18Network(self):
 
-        rootcell = 180
 
+        rootcell = 8579  # Starburst AC
 
-        morphologyGraph = self.ReadOrCreateVariable("morphologyGraph", self.CreateCleanedMorphGraph)
+        morphconngraph = self.ReadOrCreateVariable("morphconn-%d" % rootcell, morphconn.Load, structureID=rootcell, hops=1)
 
+        structList = []
+        for n in morphconngraph.nodes():
+            structList.append(n.ID)
 
-        # print("Find largest radius node for use as soma")
-        # node = morphologyGraph.LargestRadiusNode()
-        # self.assertIsNotNone(node, "No node with largest radius returned")
-        # self.assertGreater(node.Radius, 2600, "largest node has smaller radius than expected based on previous tests on structure 180")
+        print "Building network from cell #'s " + str(structList)
 
-        neuroml_xml = neuromlview_18.MorphologyToNeuroML(morphologyGraph)
+        cellelems = []
+
+        for cellid in structList:
+            morphgraph = self.ReadOrCreateVariable("morphology-%d" % cellid, self.CreateCleanedMorphGraph, StructureID=cellid)
+
+            cellelems.append(neuromlview_18.MorphologyToCell(morphgraph))
+
+        neuroml_xml = neuromlview_18.CreateDocument(cellelems)
         self.assertIsNotNone(neuroml_xml, "No neuroml v1.8 data returned")
 
-        savefilepath = os.path.join(self.TestOutputPath, '%dv18.xml' % self.StructureID)
+        savefilepath = os.path.join(self.TestOutputPath, '%dv18.xml' % rootcell)
         print "Saving neuroml output to " + savefilepath
         with file(savefilepath, 'w') as f:
             f.write(neuroml_xml)
