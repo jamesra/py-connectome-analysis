@@ -192,7 +192,7 @@ def MorphologyToCell(MorphGraph):
 
     print len(segmentlist)
 
-    cellElem = CreateCell(1, segmentlist)
+    cellElem = CreateCell(MorphGraph.graph.ID, segmentlist)
     return cellElem
 
 def MorphologyToNeuroML(MorphGraph):
