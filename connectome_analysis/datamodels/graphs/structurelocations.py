@@ -10,7 +10,7 @@ import connectome_analysis.datamodels
 
 def Load(structureID):
 
-    structure = connectome_analysis.datamodels.StructureCache[structureID]
+    structure = queries.GetStructure(structureID)
     locations = queries.GetLinkedCollection(structure.LocationsURI)
 
     connGraph = StructureLocations(structure, locations)

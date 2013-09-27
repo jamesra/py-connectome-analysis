@@ -71,7 +71,8 @@ class TestNeuroMLView(test_model.MorphologyGraphTest):
         # self.assertIsNotNone(node, "No node with largest radius returned")
         # self.assertGreater(node.Radius, 2600, "largest node has smaller radius than expected based on previous tests on structure 180")
 
-        neuroml_xml = neuromlview_18.MorphologyToNeuroML(morphologyGraph)
+        neuroml = neuromlview_18.MorphologyToNeuroML(morphologyGraph)
+        neuroml_xml = neuroml.toxml()
         self.assertIsNotNone(neuroml_xml, "No neuroml v1.8 data returned")
 
         savefilepath = os.path.join(self.TestOutputPath, '%dv18.xml' % self.StructureID)
@@ -88,21 +89,30 @@ class TestNeuroMLView(test_model.MorphologyGraphTest):
 
         morphconngraph = self.ReadOrCreateVariable("morphconn-%d" % rootcell, morphconn.Load, structureID=rootcell, hops=1)
 
-        structList = []
+        # A hack to add morphology graphs to the cache
         for n in morphconngraph.nodes():
-            structList.append(n.ID)
+            morphgraph = self.ReadOrCreateVariable("morphology-%d" % n.ID, self.CreateCleanedMorphGraph, StructureID=n.ID)
+            morphology._morphologyCache[n.ID] = morphgraph
 
-        print "Building network from cell #'s " + str(structList)
+        neuroml_elem = neuromlview_18.ConnectivityToNeuroML(morphconngraph)
+        self.assertIsNotNone(neuroml_elem, "No neuroml v1.8 element returned")
 
-        cellelems = []
-
-        for cellid in structList:
-            morphgraph = self.ReadOrCreateVariable("morphology-%d" % cellid, self.CreateCleanedMorphGraph, StructureID=cellid)
-
-            cellelems.append(neuromlview_18.MorphologyToCell(morphgraph))
-
-        neuroml_xml = neuromlview_18.CreateDocument(cellelems)
+        neuroml_xml = neuroml_elem.toxml()
         self.assertIsNotNone(neuroml_xml, "No neuroml v1.8 data returned")
+        self.assertGreater(len(neuroml_xml), 0, "No neuroml v1.8 data returned")
+
+#        structList = []
+#        for n in morphconngraph.nodes():
+#            structList.append(n.ID)
+#
+#        print "Building network from cell #'s " + str(structList)
+#
+#        cellelems = []
+#
+#              cellelems.append(neuromlview_18.MorphologyToCell(morphgraph))
+#
+#        neuroml_xml = neuromlview_18.CreateDocument(cellelems)
+#        self.assertIsNotNone(neuroml_xml, "No neuroml v1.8 data returned")
 
         savefilepath = os.path.join(self.TestOutputPath, '%dv18.xml' % rootcell)
         print "Saving neuroml output to " + savefilepath

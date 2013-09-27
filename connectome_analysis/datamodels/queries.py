@@ -6,6 +6,7 @@ Created on May 17, 2013
 
 from connectome_analysis.webclient.json.client import WCFDataServicesJsonObjectClient as Client
 import connectome_analysis.datamodels
+import numpy as np
 
 defaultendpoint = "http://connectomes.utah.edu/Services/RC1/ConnectomeData.svc"
 structureQueryTemplate = "Structures(%dL)"
@@ -108,13 +109,26 @@ def StructureLocationLinks(structureID, **kwargs):
 
 
 def GetStructureApproxPosition(structureID, **kwargs):
+    obj = connectome_analysis.datamodels.StructurePositionCache[structureID]
+    data = np.double([obj.X, obj.Y, obj.Z, obj.Radius])
+    return data
+
+
+def _GetStructureApproxPosition(structureID, **kwargs):
     template = "ApproximateStructureLocation?StructureID=%dL"
     return __CreateClient(**kwargs).Request(template % structureID)[0]
 
 
 def GetStructureApproxPositions(**kwargs):
     template = "ApproximateStructureLocations"
-    return __CreateClient(**kwargs).Request(template)
+    obj = __CreateClient(**kwargs).Request(template)
+
+    datalist = []
+
+    for i in obj:
+        datalist.append([obj.X, obj.Y, obj.Z, obj.Radius])
+
+    return np.double(datalist)
 
 
 def __appendEdgesFromRequest(request, complete_edge_list):

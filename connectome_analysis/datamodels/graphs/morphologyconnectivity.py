@@ -6,6 +6,7 @@ Created on May 17, 2013
 
 import networkx as nx
 import connectome_analysis.datamodels.queries as queries
+import structurelocations
 import copy
 
 def Load(structureID, hops=3, endpoint=None):
@@ -169,10 +170,14 @@ class MorphologyConnectivity(nx.MultiDiGraph):
             sourceStruct = queries.GetStructure(link.SourceID)
             sourceType = queries.GetStructureType(sourceStruct.TypeID)
 
-            print "Add edge: " + str(sourceParent.ID) + " -> " + str(targetParent.ID) + " [" + sourceType.Name + "]"
+            template = "Add Edge: %d -> %d key=%s" % (sourceParent.ID, targetParent.ID, edgekey)
+            print template
+
+            sourceLocations = structurelocations.Load(link.SourceID)
+            targetLocations = structurelocations.Load(link.TargetID)
 
             # Create edge between child self.structures
-            self.add_edge(sourceParent, targetParent, key=edgekey, IsParentChildEdge=False, link=link, source=queries.GetStructure(link.SourceID), target=queries.GetStructure(link.TargetID), type=sourceType)
+            self.add_edge(sourceParent, targetParent, key=edgekey, IsParentChildEdge=False, link=link, edgekey=edgekey, source=sourceLocations, target=targetLocations, type=sourceType)
 
             # We should not be adding nodes by creating edges.  This means a node was not added which should have been
             assert(numNodesAtStart == len(self.nodes()))

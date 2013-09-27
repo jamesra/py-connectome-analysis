@@ -1,2 +1,5 @@
 eclipse.preferences.version=1
+encoding//connectome_analysis/views/neuroml_18/_nsgroup.py=utf-8
+encoding//connectome_analysis/views/neuroml_18/morph.py=utf-8
+encoding//connectome_analysis/views/neuroml_18/net.py=utf-8
 encoding//connectome_analysis/views/neuroml_20b1/nml.py=utf-8

@@ -16,9 +16,25 @@ iLoc = enum(X=0,
              Radius=3,
              ID=4)
 
-def Load(structureID):
+_morphologyCache = {}
+
+DefaultScalars = np.double([2.18, 2.18, -90])  # nm/pixel of our TEM @ 5000x in microns
+DefaultScalars *= 0.001
+
+def Load(structureID, useCache=True, XYZScalars=None):
+
+    if useCache:
+        if structureID in _morphologyCache:
+            return _morphologyCache[structureID]
+
     structureLocationsGraph = structurelocations.Load(structureID)
     morphology = Morphology(structureLocationsGraph)
+
+
+
+    if useCache:
+        _morphologyCache[structureID] = morphology
+
     return morphology
 
 
@@ -26,18 +42,27 @@ def correct_scale(points, XYZScalars=None, RadiusScalar=None):
     '''Takes an array of [X,Y,Z,Radius] and scales it'''
 
     if XYZScalars is None:
-        XYZScalars = np.double([2.18, 2.18, -90])  # nm/pixel of our TEM @ 5000x
-        XYZScalars *= .001  # Convert to microns
+        global DefaultScalars
+        XYZScalars = DefaultScalars  # nm/pixel of our TEM @ 5000x
 
     if RadiusScalar is None:
         RadiusScalar = (XYZScalars[0] + XYZScalars[1]) / 2.0
 
-    points[:, 0] *= XYZScalars[0]
-    points[:, 1] *= XYZScalars[1]
-    points[:, 2] *= XYZScalars[2]
+    if points.ndim > 1:
 
-    if points.shape[1] > 3:
-        points[:, 3] *= RadiusScalar
+        points[:, 0] *= XYZScalars[0]
+        points[:, 1] *= XYZScalars[1]
+        points[:, 2] *= XYZScalars[2]
+
+        if points.shape[1] > 3:
+            points[:, 3] *= RadiusScalar
+    else:
+        points[0] *= XYZScalars[0]
+        points[1] *= XYZScalars[1]
+        points[2] *= XYZScalars[2]
+
+        if points.shape > 3:
+            points[3] *= RadiusScalar
 
     return points
 
@@ -68,6 +93,17 @@ class Morphology(object):
     def graph(self):
         return self._graph
 
+    @property
+    def kdtree(self):
+        if not hasattr(self, '_kdtree'):
+            self._kdtree = None
+
+        if self._kdtree is None:
+            mat = self.__create_numpy_matrix(self.graph)
+            self._kdtree = kdtree.KDTree(mat[:, iLoc.X:iLoc.Z + 1])
+
+        return self._kdtree
+
 
     @property
     def Data(self):
@@ -80,12 +116,13 @@ class Morphology(object):
         Constructor, scalars is a tuple with 3 scalars for the X, Y, Z coordinates
         '''
         if scalars is None:
-            scalars = np.double([2.18, 2.18, -90])  # Use the values for the first rabbit connectome if not specified
-            scalars *= .001  # Convert to microns
+            global DefaultScalars
+            scalars = DefaultScalars  # Use the values for the first rabbit connectome if not specified
 
         self._scalars = scalars
 
         self._graph = graph
+        self._kdtree = None
         self.__correct_scale()
         self.locmatrix = self.__create_numpy_matrix(graph)
 
@@ -126,6 +163,18 @@ class Morphology(object):
     def LargestRadiusNode(self):
         '''Find the node with the largest radius'''
         return max(self._graph.nodes_iter(), key=lambda x: x.Radius)
+
+    def FindNearestNodes(self, point, numMatches=1):
+        '''Return the nearest points to the passed point'''
+        (distances, indicies) = self.kdtree.query(point, k=numMatches)
+
+        nodelist = []
+
+        for i in indicies:
+            node = self.graph.nodes()[i]
+            nodelist.append(node)
+
+        return nodelist
 
     def BridgeSubgraphs(self, graph, ANodes, BNodes):
         '''Create edges between the closest locations of isolated subgraphs'''

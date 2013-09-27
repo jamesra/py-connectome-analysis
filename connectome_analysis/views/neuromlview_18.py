@@ -16,7 +16,11 @@ import xml.etree.ElementTree as etree
 import pyxb.utils.domutils
 import pyxb
 
+
+
 import connectome_analysis.viewmodels.morphology as morphology
+import connectome_analysis.viewmodels.distinctlabels as distinctlabels
+import connectome_analysis.datamodels.queries as queries
 from connectome_analysis.enum import enum
 
 # import neuroml.morphology as ml
@@ -24,13 +28,21 @@ from connectome_analysis.enum import enum
 import neuroml_18.morph as mml
 import neuroml_18.metaml as metaml
 import neuroml_18.nml as nml
+import neuroml_18.net as net
 
-nextid = -1
+pyxb.utils.domutils.BindingDOMSupport.DeclareNamespace(nml.Namespace, "nml")
+pyxb.utils.domutils.BindingDOMSupport.DeclareNamespace(mml.Namespace, "mml")
+pyxb.utils.domutils.BindingDOMSupport.DeclareNamespace(metaml.Namespace, "meta")
 
-def _getnextid():
-    global nextid
-    nextid += 1
-    return nextid
+nextcableid = -1
+
+logger = logging.getLogger("neuromlview")
+
+
+def _getnextcableid():
+    global nextcableid
+    nextcableid += 1
+    return nextcableid
 
 
 def CreatePointElement(point):
@@ -41,7 +53,6 @@ def CreatePointElement(point):
         elem.diameter = point[3]
     elif(len(point) == 3):
         elem = metaml.Point3D()
-
 
     elem.x = point[0]
     elem.y = point[1]
@@ -63,6 +74,7 @@ def CreateSegmentElement(seg):
     # print elem.toxml('utf-8')
 
     return elem
+
 
 class segment(object):
 
@@ -133,8 +145,6 @@ def CreateSegment(nxnode, parent=None, cable=None):
     seg = segment(nxnode.ID, position=[nxnode.VolumeX, nxnode.VolumeY, nxnode.Z], diameter=nxnode.Radius * 2, parent=parent, cable=cable)
     return seg
 
-    # seg = mml.Segment()
-
 
 def CreateCell(ID, segments):
 
@@ -147,32 +157,13 @@ def CreateCell(ID, segments):
 
     return elem
 
-def CreateDocument(cells):
+
+def CreateDocument():
 
     root = nml.neuroml()
 
-    root.cells = pyxb.BIND()
-    for c in cells:
-        root.cells.append(c)
+    return root
 
-    pyxb.utils.domutils.BindingDOMSupport.DeclareNamespace(nml.Namespace, "nml")
-    pyxb.utils.domutils.BindingDOMSupport.DeclareNamespace(mml.Namespace, "mml")
-    pyxb.utils.domutils.BindingDOMSupport.DeclareNamespace(metaml.Namespace, "meta")
-
-    xml = root.toxml()
-
-    return xml
-
-# def CreateSegment(graph, edge):
-#
-#    A = edge[0]
-#    B = edge[1]
-#
-#    length = morphology.Morphology.Distance(A, B)
-#
-#    seg = ml.Segment(length=length, r1=A.Radius, r2=B.Radius)
-#
-#    return seg
 
 def MorphologyToCell(MorphGraph):
 
@@ -180,7 +171,7 @@ def MorphologyToCell(MorphGraph):
 
     startingNode = MorphGraph.LargestRadiusNode()
 
-    rootseg = CreateSegment(startingNode, cable=_getnextid())
+    rootseg = CreateSegment(startingNode, cable=_getnextcableid())
 
     queue.append((startingNode, rootseg))
 
@@ -190,21 +181,237 @@ def MorphologyToCell(MorphGraph):
     while len(queue) > 0:
         ProcessQueue(MorphGraph, queue, processedNodes, segmentlist)
 
-    print len(segmentlist)
+#    print len(segmentlist)
 
     cellElem = CreateCell(MorphGraph.graph.ID, segmentlist)
     return cellElem
 
+
 def MorphologyToNeuroML(MorphGraph):
     '''Converts a graph of locations and location links to the swc format'''
 
-    cellElem = MorphologyToCell(MorphGraph)
-    xml = CreateDocument([cellElem])
+    neuroml_elem = CreateDocument()
+    cells = MorphologyToCell(MorphGraph)
+    neuroml_elem.cells = pyxb.BIND()
+    neuroml_elem.cells.append(cells)
 
-    return xml
+    return neuroml_elem
+
+
+def CreateCells(morphologylist):
+
+    cells = pyxb.BIND()
+
+    for morphgraph in morphologylist:
+        cell_elem = MorphologyToCell(morphgraph)
+        cells.append(cell_elem)
+
+    return cells
+
+
+def CreatePopulations(neuroml, morphconngraph):
+
+    populations = net.Populations()
+
+    instance = net.Instances()
+
+    for n in morphconngraph.nodes():
+        pop = net.Population()
+
+        pop.instances = pyxb.BIND()
+
+        populations.append(pop)
+
+        pop.name = n.ID
+
+        if not n.Label is None:
+            pop.cell_type_ = distinctlabels.UniqueLabel(n.Label)
+        else:
+            pop.cell_type_ = "Unknown"
+
+        instance = net.CellInstance()
+        instance.id = 0
+        location = CreatePointElement([0, 0, 0])
+        instance.location = location
+
+        pop.instances.append(instance)
+        pop.instances.size = len(pop.instances.instance)
+
+    logger.info(populations.toxml())
+    return populations
+
+
+def FindProjection(projections, sourceid, targetid):
+    for proj in projections.projection:
+        if proj.source == sourceid and proj.target == targetid:
+            return proj
+
+    return None
+
+
+def CreateConnection(morphconngraph, edge):
+    SourceCell = edge[0]
+    TargetCell = edge[1]
+
+    edgedata = _GetEdgeData(morphconngraph, edge)
+
+    SourcePosition = queries.GetStructureApproxPosition(edgedata['source'].ID)
+    TargetPosition = queries.GetStructureApproxPosition(edgedata['target'].ID)
+
+    SourcePosition = morphology.correct_scale(SourcePosition)
+    TargetPosition = morphology.correct_scale(TargetPosition)
+
+    print str(edgedata['source'].ID) + " : " + str(SourcePosition)
+    print str(edgedata['target'].ID) + " : " + str(TargetPosition)
+
+    conn = net.Connection()
+    conn.id = "0"
+    conn.pre_cell_id = SourceCell.ID
+    conn.post_cell_id = TargetCell.ID
+
+    (pre_segmentid, pre_fraction) = GetSegmentIdAndFraction(SourceCell.ID, SourcePosition[0:3])
+    (post_segmentid, post_fraction) = GetSegmentIdAndFraction(TargetCell.ID, TargetPosition[0:3])
+
+    conn.pre_segment_id = pre_segmentid
+    conn.post_segment_id = post_segmentid
+    conn.pre_fraction_along = pre_fraction
+    conn.post_fraction_along = post_fraction
+
+#    print conn.toxml()
+
+    return conn
+
+
+def GetSegmentIdAndFraction(cellid, position):
+
+    morphGraph = morphology.Load(cellid)
+
+    # Find the two nearest nodes, if they are linked then calculate the percentage.  If they are not then assume the nearest point is the location of the link.
+
+    nodes = morphGraph.FindNearestNodes(position[0:3], numMatches=2)
+
+    closest_node = nodes[0]
+    second_node = nodes[1]
+
+    neighbors = nx.all_neighbors(morphGraph.graph, closest_node)
+
+    fraction = 0.0
+    # if second_node in neighbors:
+        # Calculate the fraction
+
+
+    return (closest_node.ID, fraction)
+
+
+def _GetEdgeData(morphconngraph, edge):
+
+    # If edge doesn't have three values it was probably fetched from networkx without using data=True
+    if len(edge) < 3:
+        val = morphconngraph.edges(edge, data=True)[0]
+        return val[2]
+    else:
+        return edge[2]
+
+
+def _SynapseWeight(source, target):
+    '''Take the minimum area of the source or target'''
+
+    src_pos = queries.GetStructureApproxPosition(source.ID)
+    target_pos = queries.GetStructureApproxPosition(target.ID)
+
+    src_pos = morphology.correct_scale(src_pos)
+    target_pos = morphology.correct_scale(target_pos)
+
+    return min(src_pos[3], target_pos[3])
+
+
+def CreateProjection(morphconngraph, edge):
+    '''Add a projection to the projections element based on the edge data'''
+
+    project = net.Projection()
+
+
+    edgedata = _GetEdgeData(morphconngraph, edge)
+
+    type = edgedata['type']
+
+    synapse_props = net.GlobalSynapticProperties()
+    synapse_props.synapse_type = type.Name
+    synapse_props.weight = _SynapseWeight(edgedata['source'], edgedata['target'])
+
+    project.synapse_props.append(synapse_props)
+
+#    print synapse_props.toxml()
+
+    project.connections = net.Connections()
+
+    project.name = "%d-%d" % (edge[0].ID, edge[1].ID)
+
+    project.connections.append(CreateConnection(morphconngraph, edge))
+
+    project.source_ = str(edge[0].ID)
+    project.target_ = str(edge[1].ID)
+
+    project.group = metaml.Group()
+
+#    print project.toxml()
+
+    return project
+
+
+def CreateProjections(neuroml, morphconngraph):
+
+    projections = net.Projections()
+    projections.units = "Physiological Units"
+    neuroml.projections = projections
+
+    ed = list(morphconngraph.edges(data=True))
+
+    for e in morphconngraph.edges(data=True):
+        project = CreateProjection(morphconngraph, e)
+        neuroml.projections.append(project)
+
+    print projections.toxml()
+
+    return projections
+
+
+def ConnectivityToNeuroML(morphconngraph):
+    '''Convert a connectivity graph to a neuroml file'''
+
+    structList = []
+    for n in morphconngraph.nodes():
+        structList.append(n.ID)
+
+    neuroml_elem = CreateDocument()
+
+    neuroml_elem.populations = pyxb.BIND()
+    neuroml_elem.cells = pyxb.BIND()
+    neuroml_elem.projections = pyxb.BIND()
+
+    neuroml_elem.populations = CreatePopulations(neuroml_elem, morphconngraph)
+    neuroml_elem.projections = CreateProjections(neuroml_elem, morphconngraph)
+
+    print "Building network from cell #'s " + str(structList)
+
+    cellelems = []
+
+    for cellid in structList:
+        # morphgraph = self.ReadOrCreateVariable("morphology-%d" % cellid, self.CreateCleanedMorphGraph, StructureID=cellid)
+        morphgraph = morphology.Load(cellid)
+
+        cell_elem = MorphologyToCell(morphgraph)
+        neuroml_elem.cells.append(cell_elem)
+
+    return neuroml_elem
+
 
 def ProcessQueue(graph, queue, processedNodes=None, segmentlist=None):
-    '''Process the first entry on the queue'''
+    '''Create an ml segment for the top node on the queue. 
+       Then check all of the adjecent nodes to determine if 
+       segments have been created.  If a segment has not been
+       created then add that node the queue.  Continue until the
+       queue is empty'''
 
 #    if segmentlist is None:
 #        segmentlist = []
@@ -220,14 +427,22 @@ def ProcessQueue(graph, queue, processedNodes=None, segmentlist=None):
 
     processedNodes[nx_node.ID] = nx_node
 
-    adjacentNodes = nx.all_neighbors(graph.graph, nx_node)
+    adjacentNodes = list(nx.all_neighbors(graph.graph, nx_node))
+
+    SameCable = False
+    if len(adjacentNodes) == 2:
+        SameCable = True
 
     for node in adjacentNodes:
 
         if node.ID in processedNodes:
             continue
 
-        mlChildNode = CreateSegment(node, parent=ml_node, cable=_getnextid())
+        cableid = ml_node.cable
+        if not SameCable:
+            cableid = _getnextcableid()
+
+        mlChildNode = CreateSegment(node, parent=ml_node, cable=cableid)
         segmentlist.append(mlChildNode)
 
         queue.append((node, mlChildNode))
