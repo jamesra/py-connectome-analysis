@@ -26,13 +26,13 @@ if __name__ == '__main__':
     except:
         print "Unable to print readme_setup.txt instructions"
 
-    install_requires = ["networkx>=1.8",
-                        "numpy",
+    install_requires = ["matplotlib",
                         "scipy",
-                        "matplotlib",
+                        "numpy",
                         "requests",
                         "pyxb>=1.2.2",
-                        "PyGraphviz>=1.2"]
+                        "PyGraphviz>=1.2",
+                        "networkx>=1.8", ]
 
     setup(name='connectome_analysis',
           version='1.0',
@@ -42,5 +42,4 @@ if __name__ == '__main__':
           url="https://github.com/jamesra/py-connectome-analysis",
           test_suite="test",
           install_requires=install_requires,
-          dependency_links=dependency_links,
           packages=packages)
