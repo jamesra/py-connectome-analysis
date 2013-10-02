@@ -180,6 +180,9 @@ def MorphologyToCell(MorphGraph):
 
     while len(queue) > 0:
         ProcessQueue(MorphGraph, queue, processedNodes, segmentlist)
+        
+      # Use push instead of append because Neuron wants cableid's to be adjacent in the XML
+    segmentlist.sort(key=lambda segment: int(segment.cable))
 
 #    print len(segmentlist)
 
