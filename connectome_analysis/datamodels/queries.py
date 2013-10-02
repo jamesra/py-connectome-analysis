@@ -126,7 +126,7 @@ def GetStructureApproxPositions(**kwargs):
     datalist = []
 
     for i in obj:
-        datalist.append([obj.X, obj.Y, obj.Z, obj.Radius])
+        datalist.append([i.X, i.Y, i.Z, i.Radius])
 
     return np.double(datalist)
 
