@@ -1,7 +1,7 @@
 # .\neuroml\bp.py
 # -*- coding: utf-8 -*-
 # PyXB bindings for NM:af6adc7a4ac9033387baea63595b128c13f64551
-# Generated 2013-09-19 16:53:37.911000 by PyXB version 1.2.2
+# Generated 2013-10-11 13:54:11.899000 by PyXB version 1.1.4
 # Namespace http://morphml.org/biophysics/schema [xmlns:bio]
 
 import pyxb
@@ -13,20 +13,15 @@ import pyxb.utils.domutils
 import sys
 
 # Unique identifier for bindings created at the same time
-_GenerationUID = pyxb.utils.utility.UniqueIdentifier('urn:uuid:b2b49440-2186-11e3-b32c-10bf480cb10f')
-
-# Version of PyXB used to generate the bindings
-_PyXBVersion = '1.2.2'
-# Generated bindings are not compatible across PyXB versions
-if pyxb.__version__ != _PyXBVersion:
-    raise pyxb.PyXBVersionError(_PyXBVersion)
+_GenerationUID = pyxb.utils.utility.UniqueIdentifier('urn:uuid:e495aec0-32ae-11e3-bae7-001fbc00ed03')
 
 # Import bindings for namespaces imported into schema
-import neuroml._nsgroup as _ImportedBinding_neuroml__nsgroup
+import neuroml._nsgroup
 
-# NOTE: All namespace declarations are reserved within the binding
 Namespace = pyxb.namespace.NamespaceForURI(u'http://morphml.org/biophysics/schema', create_if_missing=True)
 Namespace.configureCategories(['typeBinding', 'elementBinding'])
+ModuleRecord = Namespace.lookupModuleRecordByUID(_GenerationUID, create_if_missing=True)
+ModuleRecord._setModule(sys.modules[__name__])
 
 def CreateFromDocument (xml_text, default_namespace=None, location_base=None):
     """Parse the given XML and use the document element to create a
@@ -61,31 +56,31 @@ def CreateFromDOM (node, default_namespace=None):
     @deprecated: Forcing use of DOM interface is unnecessary; use L{CreateFromDocument}."""
     if default_namespace is None:
         default_namespace = Namespace.fallbackNamespace()
-    return pyxb.binding.basis.element.AnyCreateFromDOM(node, default_namespace)
+    return pyxb.binding.basis.element.AnyCreateFromDOM(node, _fallback_namespace=default_namespace)
 
 from neuroml._nsgroup import biophysics # {http://morphml.org/biophysics/schema}biophysics
+from neuroml._nsgroup import ConcentrationValue # {http://morphml.org/biophysics/schema}ConcentrationValue
+from neuroml._nsgroup import InvTimeConstantValue # {http://morphml.org/biophysics/schema}InvTimeConstantValue
+from neuroml._nsgroup import TimeConstantValue # {http://morphml.org/biophysics/schema}TimeConstantValue
+from neuroml._nsgroup import VariableNamedParameter # {http://morphml.org/biophysics/schema}VariableNamedParameter
+from neuroml._nsgroup import UnnamedParameter # {http://morphml.org/biophysics/schema}UnnamedParameter
+from neuroml._nsgroup import VariableParameter # {http://morphml.org/biophysics/schema}VariableParameter
+from neuroml._nsgroup import VoltageValue # {http://morphml.org/biophysics/schema}VoltageValue
+from neuroml._nsgroup import SynapticDelayValue # {http://morphml.org/biophysics/schema}SynapticDelayValue
+from neuroml._nsgroup import TimeValue # {http://morphml.org/biophysics/schema}TimeValue
+from neuroml._nsgroup import CurrentValue # {http://morphml.org/biophysics/schema}CurrentValue
+from neuroml._nsgroup import TemperatureValue # {http://morphml.org/biophysics/schema}TemperatureValue
+from neuroml._nsgroup import FrequencyValue # {http://morphml.org/biophysics/schema}FrequencyValue
+from neuroml._nsgroup import TimeConstantValueIncZero # {http://morphml.org/biophysics/schema}TimeConstantValueIncZero
+from neuroml._nsgroup import NamedParameter # {http://morphml.org/biophysics/schema}NamedParameter
+from neuroml._nsgroup import Biophysics # {http://morphml.org/biophysics/schema}Biophysics
+from neuroml._nsgroup import ConductanceValue # {http://morphml.org/biophysics/schema}ConductanceValue
+from neuroml._nsgroup import IonProperties # {http://morphml.org/biophysics/schema}IonProperties
 from neuroml._nsgroup import SpecCapacitance # {http://morphml.org/biophysics/schema}SpecCapacitance
 from neuroml._nsgroup import SpecAxialResistance # {http://morphml.org/biophysics/schema}SpecAxialResistance
 from neuroml._nsgroup import InitialMembPotential # {http://morphml.org/biophysics/schema}InitialMembPotential
-from neuroml._nsgroup import IonProperties # {http://morphml.org/biophysics/schema}IonProperties
-from neuroml._nsgroup import NamedParameter # {http://morphml.org/biophysics/schema}NamedParameter
-from neuroml._nsgroup import VariableParameter # {http://morphml.org/biophysics/schema}VariableParameter
-from neuroml._nsgroup import VariableNamedParameter # {http://morphml.org/biophysics/schema}VariableNamedParameter
-from neuroml._nsgroup import InhomogeneousValue # {http://morphml.org/biophysics/schema}InhomogeneousValue
-from neuroml._nsgroup import UnnamedParameter # {http://morphml.org/biophysics/schema}UnnamedParameter
-from neuroml._nsgroup import MechanismType # {http://morphml.org/biophysics/schema}MechanismType
-from neuroml._nsgroup import SynapticDelayValue # {http://morphml.org/biophysics/schema}SynapticDelayValue
-from neuroml._nsgroup import TimeConstantValue # {http://morphml.org/biophysics/schema}TimeConstantValue
-from neuroml._nsgroup import InvTimeConstantValue # {http://morphml.org/biophysics/schema}InvTimeConstantValue
-from neuroml._nsgroup import TimeConstantValueIncZero # {http://morphml.org/biophysics/schema}TimeConstantValueIncZero
-from neuroml._nsgroup import TimeValue # {http://morphml.org/biophysics/schema}TimeValue
-from neuroml._nsgroup import FrequencyValue # {http://morphml.org/biophysics/schema}FrequencyValue
-from neuroml._nsgroup import ConductanceValue # {http://morphml.org/biophysics/schema}ConductanceValue
-from neuroml._nsgroup import ConductanceDensityValue # {http://morphml.org/biophysics/schema}ConductanceDensityValue
 from neuroml._nsgroup import LengthValue # {http://morphml.org/biophysics/schema}LengthValue
-from neuroml._nsgroup import CurrentValue # {http://morphml.org/biophysics/schema}CurrentValue
-from neuroml._nsgroup import ConcentrationValue # {http://morphml.org/biophysics/schema}ConcentrationValue
-from neuroml._nsgroup import VoltageValue # {http://morphml.org/biophysics/schema}VoltageValue
-from neuroml._nsgroup import TemperatureValue # {http://morphml.org/biophysics/schema}TemperatureValue
-from neuroml._nsgroup import Biophysics # {http://morphml.org/biophysics/schema}Biophysics
+from neuroml._nsgroup import ConductanceDensityValue # {http://morphml.org/biophysics/schema}ConductanceDensityValue
+from neuroml._nsgroup import InhomogeneousValue # {http://morphml.org/biophysics/schema}InhomogeneousValue
+from neuroml._nsgroup import MechanismType # {http://morphml.org/biophysics/schema}MechanismType
 from neuroml._nsgroup import Mechanism # {http://morphml.org/biophysics/schema}Mechanism
