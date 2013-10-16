@@ -49,5 +49,19 @@ class StructureLocations(nx.Graph):
             self.structureDict[loc.ID] = loc
 
         edges = queries.StructureLocationLinks(structure.ID)
-        edge_tuples = [(self.structureDict[e.A], self.structureDict[e.B], e.__dict__) for e in edges]
+
+        edge_tuples = []
+
+        for e in edges:
+            if not e.A in self.structureDict:
+                print "Missing structure, bad parent? " + str(e.A) + "-" + str(e.B)
+                continue
+
+            if not e.B in self.structureDict:
+                print "Missing structure, bad parent? " + str(e.B) + "-" + str(e.A)
+                continue
+
+            edge_tuples.append((self.structureDict[e.A], self.structureDict[e.B], e.__dict__))
+
+        # edge_tuples = [(self.structureDict[e.A], self.structureDict[e.B], e.__dict__) for e in edges]
         self.add_edges_from(edge_tuples)
