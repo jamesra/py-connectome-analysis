@@ -9,12 +9,21 @@ import connectome_analysis.datamodels.queries as queries
 import structurelocations
 import copy
 
-def Load(structureID, hops=3, endpoint=None):
+def Load(structureIDs, hops=3, endpoint=None):
+    '''StructureIDs may be a single value or a list'''
+    
+    if not isinstance(structureIDs, list):
+        structureIDs = [structureIDs]
 
     mcgraph = MorphologyConnectivity()
-    structure = queries.GetStructure(structureID, endpoint=endpoint)
 
-    mcgraph.AddStructure(structure)
+    for sID in structureIDs:
+        structure = queries.GetStructure(sID, endpoint=endpoint)
+
+        if structure is None:
+            continue
+
+        mcgraph.AddStructure(structure)
 
     for i in range(0, hops):
         print "Fetching connectivity hop #" + str(i)
@@ -47,6 +56,9 @@ class MorphologyConnectivity(nx.MultiDiGraph):
         if self.NodeInGraph(structure):
             return
 
+        if structure.TypeID != 1:
+            return
+
         assert(structure.TypeID == 1)
 
         self.structures[structure.ID] = structure
@@ -55,7 +67,7 @@ class MorphologyConnectivity(nx.MultiDiGraph):
 
         helpstr = "Add Node: " + str(structure.ID)
         if structure.Label is not None:
-            helpstr += " " + structure.Label
+            helpstr += " " + str(structure.Label)
 
         print helpstr
 
@@ -173,8 +185,15 @@ class MorphologyConnectivity(nx.MultiDiGraph):
             template = "Add Edge: %d -> %d key=%s" % (sourceParent.ID, targetParent.ID, edgekey)
             print template
 
-            sourceLocations = structurelocations.Load(link.SourceID)
-            targetLocations = structurelocations.Load(link.TargetID)
+            try:
+                sourceLocations = structurelocations.Load(link.SourceID)
+            except:
+                sourceLocations = None
+
+            try:
+                targetLocations = structurelocations.Load(link.TargetID)
+            except:
+                targetLocations = None
 
             # Create edge between child self.structures
             self.add_edge(sourceParent, targetParent, key=edgekey, IsParentChildEdge=False, link=link, edgekey=edgekey, source=sourceLocations, target=targetLocations, type=sourceType)
