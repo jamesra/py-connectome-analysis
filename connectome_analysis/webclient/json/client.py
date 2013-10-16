@@ -26,6 +26,9 @@ def urljoin(base, ext):
 def request_to_objects(json):
 
     # TODO: Revisit extracting data from JSON when I have time to understand the server response better
+    if not 'd' in json:
+        return None
+
     d = json['d']
 
     if 'results' in d:
@@ -90,21 +93,22 @@ class AsyncRequestSession(object):
             logger = logging.getLogger('WebClient')
             logger.error("Request failed with status code: " + str(request.status_code))
             logger.error(request.url)
-
-        serverObjects = request_to_objects(request.json())
-
-        if isinstance(serverObjects, list):
-            self.data.extend(serverObjects)
-        else:
-            self.data.append(serverObjects)
-
-        nextUrl = NextPageURL(request)
-        if not nextUrl is None:
-            self.__sendRequest(nextUrl)
-        else:
-            if not self.callback is None:
-                self.callback(self, self.data)
             self.completed.set()
+        else:
+            serverObjects = request_to_objects(request.json())
+
+            if isinstance(serverObjects, list):
+                self.data.extend(serverObjects)
+            else:
+                self.data.append(serverObjects)
+
+            nextUrl = NextPageURL(request)
+            if not nextUrl is None:
+                self.__sendRequest(nextUrl)
+            else:
+                if not self.callback is None:
+                    self.callback(self, self.data)
+                self.completed.set()
 
 
 class WCFDataServicesJSonClient(object):
