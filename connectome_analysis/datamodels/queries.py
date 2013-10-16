@@ -34,11 +34,26 @@ def GetStructureType(ID, **kwargs):
 
 
 def _GetStructure(ID, **kwargs):
-    return __CreateClient(**kwargs).Request(structureQueryTemplate % ID)[0]
+    data = __CreateClient(**kwargs).Request(structureQueryTemplate % ID)
+    if data is None:
+        return None
+
+    if len(data) == 0:
+        return None
+
+    return data[0]
 
 
 def _GetStructureType(ID, **kwargs):
-    return __CreateClient(**kwargs).Request(structureTypeQueryTemplate % ID)[0]
+    data = __CreateClient(**kwargs).Request(structureTypeQueryTemplate % ID)
+
+    if data is None:
+        return None
+
+    if len(data) == 0:
+        return None
+
+    return data[0]
 
 
 def GetStructuresOfType(TypeID, **kwargs):
@@ -116,7 +131,14 @@ def GetStructureApproxPosition(structureID, **kwargs):
 
 def _GetStructureApproxPosition(structureID, **kwargs):
     template = "ApproximateStructureLocation?StructureID=%dL"
-    return __CreateClient(**kwargs).Request(template % structureID)[0]
+    data = __CreateClient(**kwargs).Request(template % structureID)
+    if data is None:
+        return None
+
+    if len(data) == 0:
+        return None
+
+    return data[0]
 
 
 def GetStructureApproxPositions(**kwargs):
