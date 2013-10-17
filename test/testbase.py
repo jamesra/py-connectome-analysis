@@ -41,7 +41,10 @@ class TestBase(unittest.TestCase):
     def TestOutputPath(self):
         if 'TESTOUTPUTPATH' in os.environ:
             TestOutputDir = os.environ["TESTOUTPUTPATH"]
-            return os.path.join(TestOutputDir, self.classname)
+            TestOutputDir = os.path.join(TestOutputDir, self.classname)
+            if not os.path.exists(TestOutputDir):
+                os.makedirs(TestOutputDir)
+            return TestOutputDir
         else:
             self.fail("TESTOUTPUTPATH environment variable should specify test output directory")
 
