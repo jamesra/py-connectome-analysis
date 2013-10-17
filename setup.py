@@ -30,7 +30,7 @@ if __name__ == '__main__':
                         "scipy",
                         "numpy",
                         "requests",
-                        "pyxb>=1.2.2",
+                        "pyxb>=1.2.3",
                         "PyGraphviz>=1.2",
                         "networkx>=1.8", ]
 
