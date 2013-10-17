@@ -1,0 +1,41 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<xs:schema id="BookmarkSchema"
+    targetNamespace="http://connectomes.utah.edu/XSD/BookmarkSchema.xsd"
+    elementFormDefault="qualified"
+    xmlns="http://connectomes.utah.edu/XSD/BookmarkSchema.xsd"
+    xmlns:mstns="http://connectomes.utah.edu/XSD/BookmarkSchema.xsd"
+    xmlns:xs="http://www.w3.org/2001/XMLSchema"
+>
+
+  <xs:complexType name="position">
+    <xs:attribute name="X" type ="xs:double" use="required"/>
+    <xs:attribute name="Y" type ="xs:double" use="required"/>
+    <xs:attribute name="Z" type ="xs:double" use="required"/>
+  </xs:complexType>
+  
+  <xs:complexType name="view">
+    <xs:attribute name="Downsample" type ="xs:double" use="required"/>
+  </xs:complexType>
+
+  <xs:complexType name="bookmark">
+    <xs:sequence>
+      <xs:element name="Position" type="position" minOccurs="1" maxOccurs ="1"/>
+      <xs:element name="View" type="view" minOccurs="1" maxOccurs ="1"/>
+      <xs:element name="Comment" type ="xs:string" minOccurs="0" maxOccurs ="1"/>
+    </xs:sequence>
+    <xs:attribute name="name" type ="xs:string" use="required"/>
+  </xs:complexType>
+   
+  <xs:complexType name="folder" >    
+    <xs:sequence minOccurs ="0" maxOccurs ="unbounded">
+      <xs:element name="Folder" type="folder" minOccurs ="0"/>
+      <xs:element name="Bookmark" type="bookmark" minOccurs ="0" />
+    </xs:sequence>
+    <xs:attribute name="name" type ="xs:string" use="required"/>
+  </xs:complexType>
+  
+  <xs:element name="Folder" type="folder"/>
+  <xs:element name="Bookmark" type="bookmark"/>
+  
+</xs:schema>
+

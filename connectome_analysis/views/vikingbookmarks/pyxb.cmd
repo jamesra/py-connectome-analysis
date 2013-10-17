@@ -1,0 +1,1 @@
+python C:\Python27\scripts\pyxbgen -u BookmarkSchema.xsd -m vikingbookmarks --archive-to-file vikingbookmarks.wxs
