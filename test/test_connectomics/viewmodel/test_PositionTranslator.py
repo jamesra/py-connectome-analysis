@@ -69,7 +69,7 @@ class TestPositionTranslator(test.testbase.TestBase):
         positionTranslator = position.ZNormalizer(self.GCLPoints, self.IPLPoints)
 
         z = positionTranslator.Normalize([100000, 100000, -10000])
-        self.assertTrue(z > 0 and z < 1, "Z not within range 0 to 1.0")
+        self.assertTrue(z >= 0 and z <= 1, "Z not within range 0 to 1.0")
 
         bottom_points = positionTranslator.BottomMapper.SurfaceGrid(32, 32)
         top_points = positionTranslator.TopMapper.SurfaceGrid(32, 32)
