@@ -13,6 +13,9 @@ structureQueryTemplate = "Structures(%dL)"
 structureTypeQueryTemplate = "StructureTypes(%dL)"
 structuresOfTypeQueryTemplate = "Structures?$filter=(TypeID eq %dL)"
 
+genericTableQueryTemplate = "%s?$filter=(%s)"
+genericFilterEqualTemplate = "%s eq %s"
+
 
 def SetEndpoint(endpoint):
     global defaultendpoint
@@ -20,7 +23,6 @@ def SetEndpoint(endpoint):
 
 
 def __CreateClient(**kwargs):
-
     client_endpoint = kwargs.get('endpoint', defaultendpoint)
     return Client(client_endpoint)
 
@@ -84,6 +86,7 @@ def GetStructuresWithLabels(**kwargs):
     AddObjectCollectionToCache(structs)
     return structs
 
+
 def GetLinkedCollection(URI, **kwargs):
 
     filterArg = kwargs.get('filter', None)
@@ -96,11 +99,13 @@ def GetLinkedCollection(URI, **kwargs):
 
     return linkedCollection
 
+
 def AddObjectCollectionToCache(objects):
 
     for obj in objects:
         if(hasattr(obj, 'server_type')):
-           AddObjectToCache(obj)
+            AddObjectToCache(obj)
+
 
 def AddObjectToCache(obj):
     if obj.server_type == 'ConnectomeModel.Structure':
@@ -148,15 +153,23 @@ def GetStructureApproxPositions(**kwargs):
     datalist = []
 
     for i in obj:
-        datalist.append([i.X, i.Y, i.Z, i.Radius])
+        datalist.append(i)
 
-    return np.double(datalist)
+    return datalist  # np.double(datalist)
 
 
 def __appendEdgesFromRequest(request, complete_edge_list):
     request.wait()
     for e in request.objects:
         complete_edge_list.append((e.A, e.B))
+
+
+def LocationsByUsername(username, **kwargs):
+    filterStr = genericFilterEqualTemplate % ('Username', "'" + username + "'")
+    query = genericTableQueryTemplate % ('Locations', filterStr)
+
+    results = __CreateClient(**kwargs).Request(query)
+    return results
 
 
 def LinksForLocations(locations):
@@ -176,7 +189,6 @@ def LinksForLocations(locations):
         __appendEdgesFromRequest(r, complete_edge_list)
 
     return complete_edge_list
-
 
 
 if __name__ == '__main__':

@@ -11,9 +11,10 @@ import copy
 
 def Load(structureIDs, hops=3, endpoint=None):
     '''StructureIDs may be a single value or a list'''
-    
-    if not isinstance(structureIDs, list):
-        structureIDs = [structureIDs]
+
+    # Converting to a set removes duplicate IDs from the request
+    if not isinstance(structureIDs, set):
+        structureIDs = set(structureIDs)
 
     mcgraph = MorphologyConnectivity()
 

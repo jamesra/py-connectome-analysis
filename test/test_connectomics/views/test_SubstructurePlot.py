@@ -18,6 +18,8 @@ import test.testbase
 INL_IPL_MarkerTypeID = 224
 IPL_GCL_MarkerTypeID = 235
 GapJunctionTypeID = 28
+ConventionSynapseTypeID = 34
+RibbonSynapseTypeID = 73
 
 
 def GroupByParent(substructures):
@@ -72,21 +74,42 @@ class TestSubstructurePlot(test.testbase.TestBase):
     def GCLPoints(self):
         self._GCLPoints = self.ReadOrCreateVariable('_GCLPoints', position.FetchStructurePoints, structs=self.GCLStructs)
         return self._GCLPoints
+    
+
+    def GetSubStructures(self, typeIDList):
+        
+        structs = []
+        for typeID in typeIDList:
+            structs.extend(queries.GetStructuresOfType(typeID))
+
+        return structs
 
 
     def testSubstructurePlot(self):
 
         positionTranslator = position.ZNormalizer(self.GCLPoints, self.IPLPoints)
 
-        self.substructures = self.ReadOrCreateVariable('substructures', queries.GetStructuresOfType, TypeID=GapJunctionTypeID)
+        self.substructures = self.ReadOrCreateVariable('substructures', self.GetSubStructures, typeIDList=[GapJunctionTypeID, ConventionSynapseTypeID, RibbonSynapseTypeID])
 
         LabelsForStructures = self.ReadOrCreateVariable('gapjunctions', GetLabelsForParentStructs, childstructs=self.substructures)
 
         substructureByParent = GroupByParent(self.substructures)
 
         TargetPath = os.path.join(self.TestOutputPath, "TestSubstructurePlot.svg")
-        plotsubstructures.PlotStructureByLabel(LabelsForStructures, substructureByParent, 28, positionTranslator, path=TargetPath)
 
+        plotsubstructures.PlotStructureXYByLabel(LabelsForStructures, substructureByParent, [GapJunctionTypeID, ConventionSynapseTypeID, RibbonSynapseTypeID], None, path=os.path.join(self.TestOutputPath, "all_connections"), title="All connection positions in XY for ")
+
+        plotsubstructures.PlotStructureXYByLabel(LabelsForStructures, substructureByParent, ConventionSynapseTypeID, None, path=os.path.join(self.TestOutputPath, "conv_synapse"), title="Conventional synapse position in XY for ")
+
+        plotsubstructures.PlotStructureXYByLabel(LabelsForStructures, substructureByParent, GapJunctionTypeID, None, path=os.path.join(self.TestOutputPath, "gap_junction"), title="Gap junction position in XY for ")
+
+        plotsubstructures.PlotStructureXYByLabel(LabelsForStructures, substructureByParent, RibbonSynapseTypeID, None, path=os.path.join(self.TestOutputPath, "ribbon_synapse"), title="Ribbon synapse position in XY for ")
+
+        plotsubstructures.PlotStructureByLabel(LabelsForStructures, substructureByParent, GapJunctionTypeID, positionTranslator, path=os.path.join(self.TestOutputPath, "GapJunctionDepth.svg"), title="Gap junction depth by cell label in RC1")
+
+        plotsubstructures.PlotStructureByLabel(LabelsForStructures, substructureByParent, ConventionSynapseTypeID, positionTranslator, path=os.path.join(self.TestOutputPath, "ConventionalSynapseDepth.svg"), title="Conventional synapse depth by cell label in RC1")
+
+        plotsubstructures.PlotStructureByLabel(LabelsForStructures, substructureByParent, RibbonSynapseTypeID, positionTranslator, path=os.path.join(self.TestOutputPath, "RibbonSynapseDepth.svg"), title="Ribbon synapse depth by cell label in RC1")
 
 
 

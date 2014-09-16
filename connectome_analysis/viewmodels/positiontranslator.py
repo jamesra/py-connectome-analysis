@@ -31,7 +31,7 @@ def FetchStructurePoints(structs):
         locGraph = structurelocations.Load(s.ID)
         morphGraph = Morphology(locGraph)
 
-        locData = morphGraph.Data
+        locData = morphGraph.LocationArray
 
         if pointcollection is None:
             pointcollection = locData
@@ -57,7 +57,7 @@ class ZNormalizer(object):
         self.TopMapper = SurfaceMapper(self.TopSurfacePoints)
         self.BottomMapper = SurfaceMapper(self.BottomSurfacePoints)
 
-    def Normalize(self, points):
+    def Translate(self, points):
 
         points = np.array(points, ndmin=2)
 
@@ -69,7 +69,10 @@ class ZNormalizer(object):
 
         normalizedDepth = pointdepth / Thickness
 
-        return normalizedDepth
+        outpoints = np.double(points)
+        outpoints[:, 2] = normalizedDepth
+
+        return outpoints
 
 
 

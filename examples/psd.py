@@ -4,21 +4,27 @@ Created on Oct 14, 2013
 @author: u0490822
 '''
 
-import connectome_analysis.datamodels.graphs.morphologyconnectivity as morphconn
-import connectome_analysis.datamodels.queries as queries
-import connectome_analysis.viewmodels.distinctlabels as distinctlabels
-import connectome_analysis.views.bookmarks as vb
+
 import networkx
 import os
 import pickle
 import glob
 import numpy
+import copy
+import re
+
+import connectome_analysis.datamodels.graphs.morphologyconnectivity as morphconn
+import connectome_analysis.datamodels.queries as queries
+import connectome_analysis.viewmodels.distinctlabels as distinctlabels
+import connectome_analysis.views.bookmarks as vb
+
 
 PostSynapseTypeID = 35
+GapJunctionTypeID = 28
 
 class PickledQueries(object):
     '''Helper class copied from testbase.  Maintains on disk cache of queries for faster development iteration'''
-    
+
     @property
     def classname(self):
         return str(self.__class__.__name__)
@@ -40,7 +46,7 @@ class PickledQueries(object):
         var = None
         if hasattr(self, varname):
             var = getattr(self, varname)
-    
+
         if var is None:
             path = os.path.join(self.TestCachePath, varname + ".pickle")
             if os.path.exists(path):
@@ -50,11 +56,11 @@ class PickledQueries(object):
                     except:
                         var = None
                         print("Unable to load graph from pickle file: " + path)
-    
+
             if var is None and not createfunc is None:
                 var = createfunc(*args, **kwargs)
                 self.SaveVariable(var, path)
-    
+
         return var
 
     def SaveVariable(self, var, path):
@@ -126,6 +132,20 @@ def _GetEdgeData(morphconngraph, edge):
     else:
         return edge[2]
 
+
+def MeasureEdgeTemplate(edgedata, scalar):
+    raise NotImplemented("This is an interface definition, define your own function with the same signature and pass it as an argument")
+
+def MeasureAllRadiiOfPSD(edgedata, scalar):
+    return GetAllRadiiOfLocations(edgedata["target"], scalar=2.18)
+
+def MeasureMaxRadiiOfPSD(edgedata, scalar):
+    return GetMaxRadiusOfLocations(edgedata["target"], scalar=2.18)
+
+def MeasureMaxRadiiOfGapJunction(edgedata, scalar):
+    sourceRadii = GetMaxRadiusOfLocations(edgedata["source"], scalar=2.18)
+    targetRadii = GetMaxRadiusOfLocations(edgedata["target"], scalar=2.18)
+    return max([sourceRadii, targetRadii])
 
 def GetAllRadiiOfLocations(locations, scalar):
     return [loc.Radius * scalar for loc in locations]
@@ -217,9 +237,12 @@ def AddListToDict(dictOfLists, key, listvals):
         dictOfLists[key].extend(listvals)
 
 
-def PSDRadiusByStructIDs(morphConnGraph, structIDs, radiusFunction=None):
-    if radiusFunction is None:
-        radiusFunction = GetAllRadiiOfLocations
+def PSDRadiusByStructIDs(morphConnGraph, structIDs, LinkStructTypeID, measureFunction=None):
+    if measureFunction is None:
+        measureFunction = MeasureAllRadiiOfPSD
+
+    if not isinstance(LinkStructTypeID, list):
+        LinkStructTypeID = [LinkStructTypeID]
 
     SourceLabelToRadius = {}
     TargetLabelToRadius = {}
@@ -240,25 +263,34 @@ def PSDRadiusByStructIDs(morphConnGraph, structIDs, radiusFunction=None):
             continue
 
         targetLocations = edgedata['target']
-        if not targetLocations.structure.TypeID == PostSynapseTypeID:
+        if not targetLocations.structure.TypeID in LinkStructTypeID:
             continue
 
-        targetRadii = radiusFunction(edgedata["target"], scalar=2.18)
+        targetRadii = measureFunction(edgedata, scalar=2.18)
+        if targetRadii is None:
+            continue
 
-        if SourceInSet(e, structIDs):
+        if edgedata['link'].Bidirectional:
             AddListToDict(SourceLabelToRadius, targetLabel, targetRadii)
-
-        if TargetInSet(e, structIDs):
             AddListToDict(TargetLabelToRadius, sourceLabel, targetRadii)
+        else:
+            if SourceInSet(e, structIDs):
+                AddListToDict(SourceLabelToRadius, targetLabel, targetRadii)
+
+            if TargetInSet(e, structIDs):
+                AddListToDict(TargetLabelToRadius, sourceLabel, targetRadii)
 
     return (SourceLabelToRadius, TargetLabelToRadius)
 
 
-def PSDRadiusByLabel(morphConnGraph, labelPattern, radiusFunction=None):
+def PSDRadiusByLabel(morphConnGraph, labelPattern, LinkStructTypeID, measureFunction=None):
     '''Return the radius of child structures broken down by connection type'''
 
-    if radiusFunction is None:
-        radiusFunction = GetAllRadiiOfLocations
+    if measureFunction is None:
+        measureFunction = MeasureAllRadiiOfPSD
+
+    if not isinstance(LinkStructTypeID, list):
+        LinkStructTypeID = [LinkStructTypeID]
 
     SourceLabelToRadius = {}
     TargetLabelToRadius = {}
@@ -279,10 +311,12 @@ def PSDRadiusByLabel(morphConnGraph, labelPattern, radiusFunction=None):
             continue
 
         targetLocations = edgedata['target']
-        if not targetLocations.structure.TypeID == PostSynapseTypeID:
+        if not targetLocations.structure.TypeID in LinkStructTypeID:
             continue
 
-        targetRadii = radiusFunction(edgedata["target"], scalar=2.18)
+        targetRadii = measureFunction(edgedata, scalar=2.18)
+        if targetRadii is None:
+            continue
 
         if labelPattern in sourceLabel:
             AddListToDict(SourceLabelToRadius, targetLabel, targetRadii)
@@ -363,6 +397,61 @@ def DictToBookmarkFolders(name, dictLocations):
 
     return vb.CreateFolder(name, Folders)
 
+
+def _AddMotifByLabelPattern(motif_dict, newMotifName, LabelToStructures, LabelPattern):
+    '''
+    Add an entry to the motifs dict using the structure objects
+    '''
+    motifDict[newMotifName] = []
+
+    for label in LabelToStructures.keys():
+        if label is None:
+            continue
+
+        if re.match(LabelPattern, label):
+            ids = [s.ID for s in LabelToStructures[label]]
+            motifDict[newMotifName].extend(ids)
+
+
+def _AddMotifByLabel(motif_dict, newMotifName, LabelToStructures, Label):
+    '''
+    Add an entry to the motifs dict using the structure objects
+    '''
+
+    labelStructures = LabelToStructures[Label]
+    ids = [s.ID for s in labelStructures]
+    motifDict[newMotifName] = ids
+
+
+def _CreateAllStructIDSet(motifDict):
+
+    allStructIDs = []  # s.ID for s in structures]
+    for motif in motifDict.keys():
+        allStructIDs.extend(motifDict[motif])
+
+    return set(allStructIDs)
+
+
+def _MergeLabelToRadiusDict(A, B):
+
+    merged = {}
+    merged.update(A)
+
+    for (label, data) in B.items():
+        if label in merged:
+            merged[label].extend(data)
+        else:
+            merged[label] = data
+
+    return merged
+
+
+def _SortLabelToRadiusData(A):
+
+    for label in A.keys():
+        A[label].sort()
+
+
 if __name__ == '__main__':
     pickledData = PickledQueries()
 
@@ -375,25 +464,20 @@ if __name__ == '__main__':
 
 
     LabelToStructures = pickledData.ReadOrCreateVariable("LabelToStructures", distinctlabels.LabelsForStructures, structures)
-    #LabelToStructures = distinctlabels.LabelsForStructures(structures)
+    # LabelToStructures = distinctlabels.LabelsForStructures(structures)
 
     outstr = CellsByLabelString(LabelToStructures)
+
+    _AddMotifByLabelPattern(motifDict, "CBb", LabelToStructures, "CBb.*")
+    _AddMotifByLabelPattern(motifDict, "CBa", LabelToStructures, "CBa.*")
+
+    _AddMotifByLabel(motifDict, "Rod", LabelToStructures, "Rod BC")
+    _AddMotifByLabel(motifDict, "Aii", LabelToStructures, "GAC Aii")
 
     with open("CellsByLabel.txt", 'w') as f:
         f.write(outstr)
 
-    RodStructures = LabelToStructures["Rod BC"]
-
-    rodIDs = [s.ID for s in RodStructures]
-
-    motifDict["Rod"] = rodIDs
-
-    allStructIDs = []  # s.ID for s in structures]
-    for motif in motifDict.keys():
-        allStructIDs.extend(motifDict[motif])
-
-    allStructIDs.extend(rodIDs)
-    allStructIDs.sort()
+    allStructIDs = _CreateAllStructIDSet(motifDict)
 
     # Fetch all of the rods and cells connected to the rods, use cached data if available
     # rodMorphConnGraph = pickledData.ReadOrCreateVariable("rodMorphConnGraph", morphconn.Load, rodIDs, hops=1)
@@ -401,7 +485,8 @@ if __name__ == '__main__':
     print("Building graph for all motif structures")
     motifMorphConnGraph = pickledData.ReadOrCreateVariable("allstructs_morphconn", morphconn.Load, allStructIDs, hops=1)
 
-
+    if not os.path.exists("Output"):
+        os.makedirs("Output")
 
     BookmarkFolders = []
 
@@ -416,15 +501,27 @@ if __name__ == '__main__':
 
         BookmarkFolders.append(folder)
 
-        (SourceLabelToRadius, TargetLabelToRadius) = PSDRadiusByStructIDs(motifMorphConnGraph, IDs, radiusFunction=None)
+        (SourceLabelToRadius, TargetLabelToRadius) = PSDRadiusByStructIDs(motifMorphConnGraph, IDs, LinkStructTypeID=GapJunctionTypeID, measureFunction=MeasureMaxRadiiOfGapJunction)
 
-        DumpLabelToRadius(motif + 'InputsPSDs.txt', TargetLabelToRadius)
-        DumpLabelToRadius(motif + "OutputPartnerPSDs.txt", SourceLabelToRadius)
+        # Gap junctions are bidirectional, so dump the results in a single file
+        # combinedGapJunctions = _MergeLabelToRadiusDict(SourceLabelToRadius, TargetLabelToRadius)
+        _SortLabelToRadiusData(SourceLabelToRadius)
+        DumpLabelToRadius(os.path.join('output', motif + 'GapJunctions_MaxRadius.txt'), SourceLabelToRadius)
+        # del combinedGapJunctions
 
-        (SourceLabelToRadius, TargetLabelToRadius) = PSDRadiusByStructIDs(motifMorphConnGraph, IDs, radiusFunction=GetMaxRadiusOfLocations)
+        (SourceLabelToRadius, TargetLabelToRadius) = PSDRadiusByStructIDs(motifMorphConnGraph, IDs, LinkStructTypeID=PostSynapseTypeID, measureFunction=MeasureAllRadiiOfPSD)
+        _SortLabelToRadiusData(SourceLabelToRadius)
+        _SortLabelToRadiusData(TargetLabelToRadius)
 
-        DumpLabelToRadius(motif + 'InputsPSDs_MaxRadiusOfPSD.txt', TargetLabelToRadius)
-        DumpLabelToRadius(motif + "OutputPartnerPSDs_MaxRadiusOfPSD.txt", SourceLabelToRadius)
+        DumpLabelToRadius(os.path.join('output', motif + 'InputsPSDs.txt'), TargetLabelToRadius)
+        DumpLabelToRadius(os.path.join('output', motif + "OutputPartnerPSDs.txt"), SourceLabelToRadius)
+
+        (SourceLabelToRadius, TargetLabelToRadius) = PSDRadiusByStructIDs(motifMorphConnGraph, IDs, LinkStructTypeID=PostSynapseTypeID, measureFunction=MeasureMaxRadiiOfPSD)
+        _SortLabelToRadiusData(SourceLabelToRadius)
+        _SortLabelToRadiusData(TargetLabelToRadius)
+
+        DumpLabelToRadius(os.path.join('output', motif + 'InputsPSDs_MaxRadiusOfPSD.txt'), TargetLabelToRadius)
+        DumpLabelToRadius(os.path.join('output', motif + "OutputPartnerPSDs_MaxRadiusOfPSD.txt"), SourceLabelToRadius)
 
     AggregateFolder = vb.CreateFolder("Motifs", BookmarkFolders)
 

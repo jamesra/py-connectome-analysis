@@ -16,6 +16,14 @@ iLoc = enum(X=0,
              Radius=3,
              ID=4)
 
+iBBox = enum(MinX=0,
+                    MinY=1,
+                    MinZ=2,
+                    MaxX=3,
+                    MaxY=4,
+                    MaxZ=5,
+                    ID=6)
+
 _morphologyCache = {}
 
 DefaultScalars = np.double([2.18, 2.18, -90])  # nm/pixel of our TEM @ 5000x in microns
@@ -29,7 +37,6 @@ def Load(structureID, useCache=True, XYZScalars=None):
 
     structureLocationsGraph = structurelocations.Load(structureID)
     morphology = Morphology(structureLocationsGraph)
-
 
 
     if useCache:
@@ -67,9 +74,95 @@ def correct_scale(points, XYZScalars=None, RadiusScalar=None):
     return points
 
 
+def LocationsBoundingBox(data):
+    '''Takes a numpy array with columns [X,Y,Z,Radius,ID]. Returns a single bounding box around all locations
+    :return: [MinX MinY MinZ MaxX MaxY MaxZ ID]
+    :rtype: numpy.array'''
+
+    return np.swapaxes(np.vstack((data[:, iLoc.X] - data[:, iLoc.Radius],
+                   data[:, iLoc.Y] - data[:, iLoc.Radius],
+                   data[:, iLoc.Z] - data[:, iLoc.Radius],
+                   data[:, iLoc.X] + data[:, iLoc.Radius],
+                   data[:, iLoc.Y] + data[:, iLoc.Radius],
+                   data[:, iLoc.Z] + data[:, iLoc.Radius],
+                   data[:, iLoc.ID])), 0, 1)
+
+
+class SphereNode():
+    '''Contains a numpy array describing position and an optional obj property'''
+
+    def __hash__(self):
+        return self.ID
+
+    def __eq__(self, other):
+        if isinstance(other, SphereNode):
+            return self.ID == other.ID
+        else:
+            return self.ID == other
+
+    @property
+    def X(self):
+        return self._LocationArray[iLoc.X]
+
+    @property
+    def Y(self):
+        return self._LocationArray[iLoc.Y]
+
+    @property
+    def Z(self):
+        return self._LocationArray[iLoc.Z]
+
+    @property
+    def Radius(self):
+        return self._LocationArray[iLoc.Radius]
+
+    @property
+    def ID(self):
+        return self._LocationArray[iLoc.ID]
+
+    @property
+    def Array(self):
+        '''Returns Location numpy array using the iLoc enum indexing'''
+        return self._LocationArray
+
+    @property
+    def Obj(self):
+        return self._Obj
+
+    def __init__(self, ID, X, Y, Z, Radius, Obj):
+        self._LocationArray = np.array([X, Y, Z, Radius, ID])
+        self._Obj = Obj
+
+    @classmethod
+    def CreateFromLocationObject(cls, location):
+        '''Create a morphology node from a location node return by connectomics database'''
+        node = SphereNode(location.ID,
+                          location.VolumeX,
+                          location.VolumeY,
+                          location.Z,
+                          Location.Radius,
+                          location)
+
+        return node
+
+    @classmethod
+    def CreateFromArray(cls, location):
+        '''Create a morphology node from a numpy array of form [ID X Y Z Radius]'''
+        node = SphereNode(location[iLoc.ID],
+                                location[iLoc.X],
+                                location[iLoc.Y],
+                                location[iLoc.Z],
+                                location[iLoc.Radius],
+                                None)
+
+        return node
+
+
+
+
 class Morphology(object):
     '''
-    classdocs
+    Represents the morphology of a cell using a graph of position nodes with edges representing physically connected nodes
     '''
 
     @property
@@ -90,6 +183,15 @@ class Morphology(object):
         return (self.XScalar + self.YScalar) / 2.0
 
     @property
+    def Locations(self):
+        '''Iterator over nodes of the morphology graph'''
+        return self._graph.nodes.iter()
+
+    @property
+    def LocationLinks(self):
+        return list(nx.edges_iter(self.graph))
+
+    @property
     def graph(self):
         return self._graph
 
@@ -104,27 +206,95 @@ class Morphology(object):
 
         return self._kdtree
 
+    @property
+    def LocationArray(self):
+        ''':return: [X,Y,Z,Radius,ID]
+           :rtype: numpy.array
+        '''
+        if self._locationarray is None:
+            self._locationarray = self.__create_numpy_matrix(self.graph)
+
+        return self._locationarray
 
     @property
-    def Data(self):
-        '''Numpy array of [X,Y,Z,Radius,ID]'''
-        return self.__create_numpy_matrix(self._graph)
+    def BoundingBox(self):
+        bbox = self.LocationBoundingBoxes
 
+        minX = np.min(bbox[:, iBBox.MinX])
+        minY = np.min(bbox[:, iBBox.MinY])
+        minZ = np.min(bbox[:, iBBox.MinZ])
+        maxX = np.max(bbox[:, iBBox.MaxX])
+        maxY = np.max(bbox[:, iBBox.MaxY])
+        maxZ = np.max(bbox[:, iBBox.MaxZ])
 
-    def __init__(self, graph, scalars=None):
+        return np.array([minX, minY, minZ, maxX, maxY, maxZ])
+
+    @property
+    def LocationBoundingBoxes(self):
+        ''':returns: [ID MinX MinY MinZ MaxX MaxY MaxZ]
+           :rtype numpy.array:
         '''
-        Constructor, scalars is a tuple with 3 scalars for the X, Y, Z coordinates
+        return LocationsBoundingBox(self.LocationArray)
+
+    @classmethod
+    def CreateFromStructureLocationsGraph(cls, graph, scalars=None):
         '''
+        :Param networkx.Graph: Graph of structure locations
+        :Param array: Array of scalars for each dimension [X Y Z Radius]
+        :Return: Morphology object 
+        '''
+        morph = Morphology()
+
         if scalars is None:
             global DefaultScalars
             scalars = DefaultScalars  # Use the values for the first rabbit connectome if not specified
 
+        morph._scalars = scalars
+
+        for node in nx.nodes_iter(graph):
+            morphnode = SphereNode.CreateFromLocationObject(node)
+            morph.graph.add_node(morphnode)
+
+        morph._kdtree = None
+        morph.__correct_scale()
+
+    @classmethod
+    def CreateFromLocationArray(cls, array, scalars=None):
+        '''
+        :Param ndarray array: Nx5 array [[ID X Y Z Radius]]
+        :Param array: Array of scalars for each dimension [X Y Z Radius] 
+        :Return: Morphology object 
+        '''
+        morph = Morphology()
+
+        if scalars is None:
+            global DefaultScalars
+            scalars = DefaultScalars  # Use the values for the first rabbit connectome if not specified
+
+        morph._scalars = scalars
+
+        (nRows, nCols) = array.shape
+
+        for iRow in range(0, nRows):
+            morphnode = SphereNode.CreateFromArray(array[iRow, :])
+            morph.graph.add_node(morphnode)
+
+        morph._kdtree = None
+        morph.__correct_scale()
+
+    def __init__(self, scalars=None):
+        '''
+        Constructor, scalars is a tuple with 3 scalars for the X, Y, Z coordinates
+        '''
+
+        self._graph = nx.Graph()
+        self._kdtree = None
+
+    def Scale(self, scalars):
         self._scalars = scalars
 
-        self._graph = graph
-        self._kdtree = None
         self.__correct_scale()
-        self.locmatrix = self.__create_numpy_matrix(graph)
+
 
     def __correct_scale(self):
 
@@ -134,8 +304,9 @@ class Morphology(object):
             n.Z *= self.ZScalar
             n.Radius *= self.RadiusScalar
 
-        # The locmatrix should be erased if we scaled the graph
-        self.locmatrix = None
+        # The cached _locationarray should be adjusted or cleared if we scaled the graph
+        self._locationarray = None
+
 
     def __create_numpy_matrix(self, graph):
 
@@ -268,3 +439,5 @@ class Morphology(object):
         # Keep repeating until nothing is removed
         if neighborsRemoved:
             self.RemoveOverlappingNeighbors(node)
+
+

@@ -10,7 +10,7 @@ import numpy as np
 from connectome_analysis.datamodels.graphs import structurelocations
 from connectome_analysis.datamodels import queries
 
-from connectome_analysis.viewmodels.morphology import Morphology
+from connectome_analysis.viewmodels.morphology import Morphology, iLoc
 
 import pyparsing
 import matplotlib.pyplot as plt
@@ -45,7 +45,7 @@ class TestIPLDepth(test.testbase.TestBase):
             locGraph = structurelocations.Load(s.ID)
             morphGraph = Morphology(locGraph)
 
-            locData = morphGraph.Data
+            locData = morphGraph.LocationArray
 
             if pointcollection is None:
                 pointcollection = locData
@@ -63,7 +63,7 @@ class TestIPLDepth(test.testbase.TestBase):
 
 
         # ax.scatter(xs=points[:, 0], ys=points[:, 1], zs=points[:, 2])
-        ax.plot_trisurf(points[:, 0], points[:, 1], points[:, 2], cmap=cm.jet, shade=True)
+        ax.plot_trisurf(points[:, iLoc.iX], points[:, iLoc.iY], points[:, iLoc.iZ], cmap=cm.jet, shade=True)
 
         plt.xlabel('X')
         plt.ylabel('Y')
@@ -85,7 +85,7 @@ class TestIPLDepth(test.testbase.TestBase):
             locGraph = structurelocations.Load(s.ID)
             morphGraph = Morphology(locGraph)
 
-            ax.text(x=morphGraph.Data[0, 0], y=morphGraph.Data[0, 1], z=morphGraph.Data[0, 2], s=str(s.ID), label=Label)
+            ax.text(x=morphGraph.LocationArray[0, iLoc.iX], y=morphGraph.LocationArray[0, iLoc.iY], z=morphGraph.LocationArray[0, iLoc.iZ], s=str(s.ID), label=Label)
 
     def CheckForDuplicates(self, points):
 
@@ -115,8 +115,6 @@ class TestIPLDepth(test.testbase.TestBase):
        # self.CheckForDuplicates(self.IPLBoundaryPoints)
         self.SaveVariable(self.IPLBoundaryPoints, 'IPLBoundaryPoints.pickle')
 
-
-
         self.PlotBoundary(ax, self.IPLBoundaryPoints)
 
         self.GCLBoundaryPoints = self.ReadOrCreateVariable('GCLBoundaryPoints', self.FetchTypePoints, TypeID=235)
@@ -130,9 +128,6 @@ class TestIPLDepth(test.testbase.TestBase):
         # plt.show()
 
         pass
-
-
-
 
 
 if __name__ == "__main__":

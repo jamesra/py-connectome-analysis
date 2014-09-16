@@ -6,8 +6,13 @@ Created on Oct 17, 2013
 
 import vikingbookmarks.vikingbookmarks as vbm
 
+from operator import attrgetter 
 
-def BookmarksForLocations(locations):
+def BookmarksForLocations(locations, NameAttribute=None):
+    '''NameAttribute indicates which attribute should be used for the name'''
+    
+    if NameAttribute is None:
+        NameAttribute = "ParentID"
 
     bookmarks = []
 
@@ -27,7 +32,11 @@ def BookmarksForLocations(locations):
         bookmark.View = view
         bookmark.Comment = str(loc.ParentID)
 
-        bookmark.name = str(loc.ParentID)
+        if not hasattr(loc, NameAttribute):
+            print "Error, object missing name attribute " + str(loc)
+            continue
+
+        bookmark.name = str(getattr(loc, NameAttribute))
 
         bookmarks.append(bookmark)
 
@@ -45,6 +54,31 @@ def CreateFolder(name, elements):
         folder.append(elem)
 
     return folder
+
+#
+# def dictToBookmarks(dictObjs):
+#     '''Convert a dictionary to a list of bookmarks folders'''
+#
+#     for k, values in dictObjs:
+#
+#         bookmarks = []
+#
+#         for v in values:
+#             if isinstance(v, Location)
+
+
+def LocationsByParentStructure(locations):
+    '''Return a dictionary keyed by structure ID containing locations for that structureID'''
+
+    StructToLoc = {}
+
+    for l in locations:
+        if l.ParentID in StructToLoc:
+            StructToLoc[l.ParentID].append(l)
+        else:
+            StructToLoc[l.ParentID] = [l]
+
+    return StructToLoc
 
 
 if __name__ == '__main__':
