@@ -23,44 +23,18 @@ def urljoin(base, ext):
 
     return base + '/' + ext
 
-def request_to_objects(json):
-
-    # TODO: Revisit extracting data from JSON when I have time to understand the server response better
-    if not 'd' in json:
-        return None
-
-    d = json['d']
-
-    if 'results' in d:
-        return d['results']
-
-    return d
-
+def request_to_objects(req):
+    return req["value"]
 
 def NextPageURL(r):
     '''Returns the URL for the next page of results if it exists.
-       The __next entry in the content contains the URL to continue the 
+       The __next entry in the content contains the URL to continue the
        query.'''
-    iNext = r.content.find('__next')
-    if iNext is None or iNext < 0:
-        return
-
-    try:
-        nextUrlStart = r.content[iNext:]
-        ivalue = nextUrlStart.find(':')
-        value = nextUrlStart[ivalue + 1:]
-
-        istartvalue = value.find('"')
-        value = value[istartvalue + 1:]
-        iendvalue = value.find('"')
-        value = value[:iendvalue]
-        nextUrl = value.strip()
-        return nextUrl
-    except:
-        logger = logging.getLogger("Request Callback")
-        logger.warn("Error parsing response when checking existence of next response page")
+    r = r.json()
+    if "@odata.nextLink" in r:
+        return r["@odata.nextLink"]
+    else:
         return None
-
 
     # requests.get(next, headers=r.request.headers,
     #             hooks=dict(response=print_items))
@@ -88,7 +62,6 @@ class AsyncRequestSession(object):
 
     def __OnResponse(self, request, **kwargs):
         '''Handle a response from the server'''
-
         if request.status_code != 200:
             logger = logging.getLogger('WebClient')
             logger.error("Request failed with status code: " + str(request.status_code))
@@ -96,14 +69,13 @@ class AsyncRequestSession(object):
             self.completed.set()
         else:
             serverObjects = request_to_objects(request.json())
-
             if isinstance(serverObjects, list):
                 self.data.extend(serverObjects)
             else:
                 self.data.append(serverObjects)
 
             nextUrl = NextPageURL(request)
-            if not nextUrl is None:
+            if nextUrl is not None:
                 self.__sendRequest(nextUrl)
             else:
                 if not self.callback is None:
@@ -164,8 +136,19 @@ class WCFDataServicesJsonObjectClient(WCFDataServicesJSonClient):
 
 
 if __name__ == '__main__':
-    client = WCFDataServicesJSonClient('http://connectomes.utah.edu/Services/RC1/ConnectomeData.svc')
-    structureTypesArray = client.Request('StructureTypes')
 
-    for st in structureTypesArray:
-        print st['ID']
+    import json
+
+    client = WCFDataServicesJSonClient("http://websvc1.connectomes.utah.edu/RC1/OData")
+    session = client.AsyncRequest("StructureTypes", None)
+    for data in session.data:
+        print(data["ID"], data["Name"])
+    # json.dump({"data" : session.data}, open("./StructureTypes.json", "w"), indent=4, sort_keys=True)
+
+    # client = WCFDataServicesJSonClient("http://websvc1.connectomes.utah.edu/RC1/OData")
+    # session = client.AsyncRequest("Structures", None)
+    # json.dump({"data" : session.data}, open("./Structures.json", "w"), indent=4, sort_keys=True)
+
+    # client = WCFDataServicesJSonClient("http://websvc1.connectomes.utah.edu/RC1/OData")
+    # session = client.AsyncRequest("Locations", None)
+    # json.dump({"data" : session.data}, open("./Locations.json", "w"), indent=4, sort_keys=True)
